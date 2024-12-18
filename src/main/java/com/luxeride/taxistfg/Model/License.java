@@ -12,5 +12,7 @@ public class License {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer ID;
+    @Column(name = "active",nullable = false)
+    private boolean active;
 }
 

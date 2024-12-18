@@ -22,4 +22,8 @@ public class Car {
     @OneToOne
     @JoinColumn(name = "id_license", referencedColumnName = "ID", nullable = false)
     private License license;
+
+    @Column(name = "active",nullable = false)
+    private boolean active;
+
 }

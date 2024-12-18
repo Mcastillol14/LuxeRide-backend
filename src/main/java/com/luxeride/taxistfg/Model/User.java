@@ -38,7 +38,6 @@ public class User implements UserDetails {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     private Set<String> roles = new HashSet<>();
-
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream().map(role -> (GrantedAuthority) () -> "ROLE_" + role).toList();
@@ -63,6 +62,9 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+
+
 
     public User(String name, String lastName, String DNI, String email, String password, Set<String> roles) {
         this.name = name;
@@ -97,8 +99,9 @@ public class User implements UserDetails {
 
     @Override
     public String getUsername() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getUsername'");
+        return this.email;
     }
+
+
 }
 

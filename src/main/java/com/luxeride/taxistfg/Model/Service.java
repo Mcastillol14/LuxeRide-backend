@@ -18,4 +18,8 @@ public class Service {
 
     @Column(name = "price_per_km", nullable = false)
     private double pricePerKm;
+
+    @Column(name = "active",nullable = false)
+    private boolean active;
 }
+
