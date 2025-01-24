@@ -9,6 +9,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.List;
 
 @Data
 @NoArgsConstructor
@@ -38,6 +39,10 @@ public class User implements UserDetails {
     @CollectionTable(name = "user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     private Set<String> roles = new HashSet<>();
+
+    @OneToMany(mappedBy = "user")
+    private List<Car> cars;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream().map(role -> (GrantedAuthority) () -> "ROLE_" + role).toList();
@@ -62,9 +67,6 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
-
-
-
 
     public User(String name, String lastName, String DNI, String email, String password, Set<String> roles) {
         this.name = name;
@@ -102,6 +104,8 @@ public class User implements UserDetails {
         return this.email;
     }
 
-
+    public boolean isDriver() {
+        return roles.contains("DRIVER");
+    }
 }
 

@@ -21,7 +21,7 @@ public class Trip {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "driver_id", referencedColumnName = "ID", nullable = false)
-    private Driver driver;
+    private User driver;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "car_license_plate", referencedColumnName = "licensePlate", nullable = false)
@@ -54,3 +54,4 @@ public class Trip {
     @Column(name = "pdf_url")
     private String pdfUrl;
 }
+

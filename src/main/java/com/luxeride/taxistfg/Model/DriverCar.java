@@ -11,13 +11,17 @@ import lombok.NoArgsConstructor;
 public class DriverCar {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer ID;
+    private Integer id;
 
     @ManyToOne
-    @JoinColumn(name = "driver_id", referencedColumnName = "ID", nullable = false)
-    private Driver driver;
+    @JoinColumn(name = "user_id", referencedColumnName = "ID", nullable = false)
+    private User driver;
 
     @ManyToOne
-    @JoinColumn(name = "license_plate", referencedColumnName = "licensePlate", nullable = false)
+    @JoinColumn(name = "car_license_plate", referencedColumnName = "licensePlate", nullable = false)
     private Car car;
+
+    @Column(name = "is_current", nullable = false)
+    private boolean isCurrent;
 }
+

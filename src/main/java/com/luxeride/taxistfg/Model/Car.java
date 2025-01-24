@@ -23,7 +23,11 @@ public class Car {
     @JoinColumn(name = "id_license", referencedColumnName = "ID", nullable = false)
     private License license;
 
-    @Column(name = "active",nullable = false)
+    @Column(name = "active", nullable = false)
     private boolean active;
 
+    @ManyToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "ID")
+    private User user;
 }
+
