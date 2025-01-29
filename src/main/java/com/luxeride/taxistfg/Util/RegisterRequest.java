@@ -6,12 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 @Data
-@NoArgsConstructor
 @Builder
 @AllArgsConstructor
-public class UpdateRequest {
-    private String name;
-    private String lastName;
-    private String email;
+@NoArgsConstructor
+public class RegisterRequest {
+    private String nombre;
+    private String apellidos;
     private String dni;
+    private String email;
+    private String password;
 }

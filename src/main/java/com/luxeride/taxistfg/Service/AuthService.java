@@ -2,7 +2,7 @@ package com.luxeride.taxistfg.Service;
 
 import com.luxeride.taxistfg.JWT.AuthResponse;
 
-import com.luxeride.taxistfg.Repository.UserRepository;
+import com.luxeride.taxistfg.Repository.UsuarioRepository;
 import com.luxeride.taxistfg.Util.LoginRequest;
 import lombok.RequiredArgsConstructor;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
-    private final UserRepository userRepository;
+    private final UsuarioRepository userRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
@@ -28,3 +28,4 @@ public class AuthService {
                 .build();
     }
 }
+

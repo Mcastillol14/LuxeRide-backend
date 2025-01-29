@@ -1,7 +1,8 @@
 package com.luxeride.taxistfg.JWT;
 
-
 import com.luxeride.taxistfg.Service.JwtService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -18,11 +19,10 @@ import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
 
-
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-
+    private static final Logger logger = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
     private final JwtService jwtService;
 
     public JwtAuthenticationFilter(JwtService jwtService) {
@@ -31,33 +31,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
+        logger.debug("JwtAuthenticationFilter is processing a request to: " + request.getRequestURI());
+        
         try {
-            // Obtener el token del encabezado de la solicitud
             final String token = getTokenFromRequest(request);
+            logger.debug("Token extracted from request: " + (token != null ? "Token present" : "No token"));
 
             if (token != null && jwtService.isValidToken(token)) {
-                // Extraer el nombre de usuario y los roles del token
                 String username = jwtService.getUsernameFromToken(token);
                 List<String> roles = jwtService.getRolesFromToken(token);
+                logger.debug("Valid token for user: " + username + " with roles: " + roles);
 
-                // Convertir los roles a GrantedAuthority
                 List<SimpleGrantedAuthority> authorities = roles.stream()
                         .map(SimpleGrantedAuthority::new)
                         .collect(Collectors.toList());
 
-                // Crear el objeto de autenticación
                 UsernamePasswordAuthenticationToken authentication =
                         new UsernamePasswordAuthenticationToken(username, null, authorities);
 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
+                logger.debug("Authentication set in SecurityContextHolder");
+            } else if (token != null) {
+                logger.debug("Invalid token");
             }
+
             filterChain.doFilter(request, response);
         } catch (Exception e) {
+            logger.error("Error in JwtAuthenticationFilter: ", e);
             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
             response.getWriter().write("Unauthorized: " + e.getMessage());
         }
     }
-
 
     private String getTokenFromRequest(HttpServletRequest request) {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);

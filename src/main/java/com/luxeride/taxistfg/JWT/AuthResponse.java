@@ -1,6 +1,5 @@
 package com.luxeride.taxistfg.JWT;
 
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

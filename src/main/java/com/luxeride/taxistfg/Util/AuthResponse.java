@@ -9,6 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class DriverRequest {
-    private String dni;
+public class AuthResponse {
+    private String token;
+    private String email;
+    private String rol;
 }
+

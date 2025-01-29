@@ -1,7 +1,7 @@
 package com.luxeride.taxistfg.Config;
 
-import com.luxeride.taxistfg.Repository.UserRepository;
-import com.luxeride.taxistfg.Service.UserService;
+import com.luxeride.taxistfg.Repository.UsuarioRepository;
+import com.luxeride.taxistfg.Service.UsuarioServicie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -17,7 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 @Configuration
 @RequiredArgsConstructor
 public class ApplicationManager {
-    private final UserRepository userRepository;
+    private final UsuarioRepository usuarioRepository;
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception{
 
@@ -37,7 +37,7 @@ public class ApplicationManager {
     }
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
+        return username -> usuarioRepository.findByEmail(username)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
     }
 }
