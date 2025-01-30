@@ -2,6 +2,8 @@ package com.luxeride.taxistfg.Service;
 
 import com.luxeride.taxistfg.Model.Rol;
 import com.luxeride.taxistfg.Model.Usuario;
+
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import java.util.Optional;
@@ -9,12 +11,15 @@ import java.util.Optional;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import jakarta.transaction.Transactional;
 
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
 
 @Service
 public class UsuarioServicie {
+    @Autowired
     private UsuarioRepository usuarioRepository;
+    @Autowired
     private PasswordEncoder encriptadoPassword;
 
     public UsuarioServicie(UsuarioRepository usuarioRepository, PasswordEncoder encriptadoPassword) {
@@ -22,6 +27,7 @@ public class UsuarioServicie {
         this.encriptadoPassword = encriptadoPassword;
     }
 
+    @Transactional
     public void registrarUsario(Usuario usuario) {
         Optional<Usuario> existingUsuarioByEmail = usuarioRepository.findByEmail(usuario.getEmail());
         Optional<Usuario> existingUsuarioByDni = usuarioRepository.findByDni(usuario.getDni());
@@ -59,6 +65,7 @@ public class UsuarioServicie {
         usuarioCreado.setRol(Rol.ROL_CLIENTE);
         usuarioRepository.save(usuarioCreado);
     }
+
     public Optional<Usuario> obtenerUsuarioPorEmail(String email) {
         return usuarioRepository.findByEmail(email);
     }
@@ -68,6 +75,7 @@ public class UsuarioServicie {
 
     }
 
+    @Transactional
     public void añadirTaxista(Usuario usuario) {
         Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
         if (!existingUsuario.isPresent()) {
@@ -82,6 +90,7 @@ public class UsuarioServicie {
         usuarioRepository.save(usuarioActualizado);
     }
 
+    @Transactional
     public void eliminarTaxista(Usuario usuario) {
         Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
         if (!existingUsuario.isPresent()) {
