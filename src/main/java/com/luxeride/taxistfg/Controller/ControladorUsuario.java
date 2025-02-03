@@ -13,7 +13,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
 import com.luxeride.taxistfg.Service.AuthService;
-import com.luxeride.taxistfg.Service.UsuarioServicie;
+import com.luxeride.taxistfg.Service.UsuarioService;
 import com.luxeride.taxistfg.Util.LoginRequest;
 import com.luxeride.taxistfg.JWT.AuthResponse;
 import com.luxeride.taxistfg.Model.Usuario;
@@ -21,20 +21,21 @@ import com.luxeride.taxistfg.Repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
 public class ControladorUsuario {
     private static final Logger logger = LoggerFactory.getLogger(ControladorUsuario.class);
 
-    private final UsuarioServicie usuarioServicie;
+    private final UsuarioService usuarioService;
     private final AuthService authService;
     private final UsuarioRepository usuarioRepository;
 
     @PostMapping("/registrar")
     public ResponseEntity<String> registrarUsario(@RequestBody Usuario usuario){
         try{
-            usuarioServicie.registrarUsario(usuario);
+            usuarioService.registrarUsario(usuario);
             return ResponseEntity.ok("Usuario registrado exitosamente");
         }catch(IllegalArgumentException e){
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -78,4 +79,5 @@ public class ControladorUsuario {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener la información del usuario");
         }
     }
+
 }

@@ -6,23 +6,27 @@ import com.luxeride.taxistfg.Model.Usuario;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
+
 import java.util.Optional;
 
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
+
 import jakarta.transaction.Transactional;
 
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
 
 @Service
-public class UsuarioServicie {
+public class UsuarioService {
     @Autowired
     private UsuarioRepository usuarioRepository;
     @Autowired
     private PasswordEncoder encriptadoPassword;
 
-    public UsuarioServicie(UsuarioRepository usuarioRepository, PasswordEncoder encriptadoPassword) {
+    public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder encriptadoPassword) {
         this.usuarioRepository = usuarioRepository;
         this.encriptadoPassword = encriptadoPassword;
     }
@@ -63,6 +67,7 @@ public class UsuarioServicie {
         usuarioCreado.setEmail(usuario.getEmail());
         usuarioCreado.setPassword(passwordEncriptada);
         usuarioCreado.setRol(Rol.ROL_CLIENTE);
+        usuarioCreado.setAccountNonLocked(true);
         usuarioRepository.save(usuarioCreado);
     }
 
@@ -74,16 +79,22 @@ public class UsuarioServicie {
         return usuarioRepository.findAll(pageable);
 
     }
+    public Page<Usuario> obtenerUsuariosPorFiltro(Pageable pageable, String rol, String dni) {
+        Rol rolEnum = (rol != null && !rol.isEmpty()) ? Rol.valueOf(rol) : null;
+    
+        return usuarioRepository.findByRolAndDni(pageable, rolEnum, dni);
+    }
+    
 
     @Transactional
-    public void añadirTaxista(Usuario usuario) {
+    public void addTaxista(Usuario usuario) {
         Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
         if (!existingUsuario.isPresent()) {
-            throw new IllegalArgumentException("El usuario que quieres añadir a taxista no existe");
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
         }
         Usuario usuarioActualizado = existingUsuario.get();
         if (usuarioActualizado.getRol() == Rol.ROL_TAXISTA) {
-            throw new IllegalArgumentException("El usuario que quieres añadir a taxita ya es taxista");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario ya es taxista");
         }
         usuarioActualizado.setRol(Rol.ROL_TAXISTA);
 
@@ -106,6 +117,42 @@ public class UsuarioServicie {
 
     public Page<Usuario> obtenerTodosLosTaxistas(Pageable pageable) {
         return usuarioRepository.findByRol(Rol.ROL_TAXISTA, pageable);
+    }
+
+    @Transactional
+    public void desactivarCuenta(Usuario usuario) {
+        Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
+
+        if (!existingUsuario.isPresent()) {
+            throw new IllegalArgumentException("El usuario que quieres desactivar no existe");
+        }
+
+        Usuario usuarioActualizado = existingUsuario.get();
+
+        if (!usuarioActualizado.isAccountNonLocked()) {
+            return;
+        }
+
+        usuarioActualizado.setAccountNonLocked(false);
+        usuarioRepository.save(usuarioActualizado);
+    }
+
+    @Transactional
+    public void activarCuenta(Usuario usuario) {
+        Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
+
+        if (!existingUsuario.isPresent()) {
+            throw new IllegalArgumentException("El usuario que quieres activar no existe");
+        }
+
+        Usuario usuarioActualizado = existingUsuario.get();
+
+        if (usuarioActualizado.isAccountNonLocked()) {
+            return; 
+        }
+
+        usuarioActualizado.setAccountNonLocked(true);
+        usuarioRepository.save(usuarioActualizado);
     }
 
 }

@@ -46,6 +46,9 @@ public class Usuario implements UserDetails {
     @Column(nullable = false)
     private Rol rol;
 
+    @Column(nullable = false)
+    private boolean accountNonLocked = true; 
+
     @ManyToMany
     @JoinTable(name = "usuario_coche", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "coche_id"))
     private Set<Coche> coches;
@@ -73,7 +76,7 @@ public class Usuario implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return this.accountNonLocked;
     }
 
     @Override
@@ -86,4 +89,3 @@ public class Usuario implements UserDetails {
         return true;
     }
 }
-

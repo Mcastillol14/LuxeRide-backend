@@ -1,7 +1,6 @@
 package com.luxeride.taxistfg.Config;
 
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
-import com.luxeride.taxistfg.Service.UsuarioServicie;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
