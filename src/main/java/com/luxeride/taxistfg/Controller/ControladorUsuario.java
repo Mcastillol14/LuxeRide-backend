@@ -21,7 +21,6 @@ import com.luxeride.taxistfg.Repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
-
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
@@ -33,21 +32,21 @@ public class ControladorUsuario {
     private final UsuarioRepository usuarioRepository;
 
     @PostMapping("/registrar")
-    public ResponseEntity<String> registrarUsario(@RequestBody Usuario usuario){
-        try{
+    public ResponseEntity<String> registrarUsario(@RequestBody Usuario usuario) {
+        try {
             usuarioService.registrarUsario(usuario);
             return ResponseEntity.ok("Usuario registrado exitosamente");
-        }catch(IllegalArgumentException e){
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @PostMapping("/iniciar")
     public ResponseEntity<AuthResponse> iniciarSesion(@RequestBody LoginRequest loginRequest) {
-        try{
+        try {
             AuthResponse response = this.authService.login(loginRequest);
             return ResponseEntity.ok(response);
-        }catch(Exception e){
+        } catch (Exception e) {
             logger.error("Error al iniciar sesión", e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(new AuthResponse(null));
         }
@@ -64,7 +63,7 @@ public class ControladorUsuario {
             String email = (String) auth.getPrincipal();
             Usuario usuario = usuarioRepository.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
-            
+
             Map<String, String> informacion = new LinkedHashMap<>();
             informacion.put("nombre", usuario.getNombre());
             informacion.put("apellidos", usuario.getApellidos());
@@ -76,7 +75,8 @@ public class ControladorUsuario {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Usuario no encontrado");
         } catch (Exception e) {
             logger.error("Error al obtener información del usuario", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error al obtener la información del usuario");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al obtener la información del usuario");
         }
     }
 

@@ -21,6 +21,6 @@ public class Licencia {
     @Column(nullable = false)
     private boolean estado = true;
 
-    @OneToOne(mappedBy = "licencia")
+    @OneToOne(mappedBy = "licencia", fetch = FetchType.EAGER)
     private Coche coche;
 }

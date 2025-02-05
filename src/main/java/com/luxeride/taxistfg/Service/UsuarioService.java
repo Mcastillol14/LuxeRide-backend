@@ -71,6 +71,48 @@ public class UsuarioService {
         usuarioRepository.save(usuarioCreado);
     }
 
+    @Transactional
+    public void editarUsuario(Integer Id, String nombre, String apellidos, String dni, String email) {
+        Optional<Usuario> existingUsuario = usuarioRepository.findById(Id);
+    
+        if (!existingUsuario.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario que quieres editar no existe");
+        }
+    
+        Usuario usuarioActualizado = existingUsuario.get();
+    
+        Optional<Usuario> existingUsuarioByEmail = usuarioRepository.findByEmail(email);
+        if (existingUsuarioByEmail.isPresent() && !existingUsuarioByEmail.get().getId().equals(Id)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso");
+        }
+    
+        Optional<Usuario> existingUsuarioByDni = usuarioRepository.findByDni(dni);
+        if (existingUsuarioByDni.isPresent() && !existingUsuarioByDni.get().getId().equals(Id)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El DNI ya está en uso");
+        }
+    
+        if (nombre == null || nombre.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre es obligatorio");
+        }
+        if (apellidos == null || apellidos.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los apellidos son obligatorios");
+        }
+        if (dni == null || dni.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El DNI es obligatorio");
+        }
+        if (email == null || email.trim().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico es obligatorio");
+        }
+    
+        usuarioActualizado.setNombre(nombre);
+        usuarioActualizado.setApellidos(apellidos);
+        usuarioActualizado.setDni(dni);
+        usuarioActualizado.setEmail(email);
+    
+        usuarioRepository.save(usuarioActualizado);
+    }
+    
+    
     public Optional<Usuario> obtenerUsuarioPorEmail(String email) {
         return usuarioRepository.findByEmail(email);
     }
