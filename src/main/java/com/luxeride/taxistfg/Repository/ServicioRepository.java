@@ -16,5 +16,6 @@ public interface ServicioRepository extends JpaRepository<Servicio, Integer> {
 
     Page<Servicio> findByEstadoFalse(Pageable pageable);
 
-    Page<Servicio> findByEstadoOrEstadoIsNull(Boolean estado, Boolean nullEstado, Pageable pageable);
+    Page<Servicio> findByEstado(Pageable pageable, Boolean estado);
+
 }

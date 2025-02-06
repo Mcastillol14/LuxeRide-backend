@@ -47,11 +47,11 @@ public class ServicioService {
 
     @Transactional
     public void desactivarServicio(Integer id) {
-        Optional<Servicio> servicioOpt = servicioRepository.findById(id);
-        if (!servicioOpt.isPresent()) {
+        Optional<Servicio> existeServicio = servicioRepository.findById(id);
+        if (!existeServicio.isPresent()) {
             throw new IllegalArgumentException("El servicio no existe");
         }
-        Servicio servicio = servicioOpt.get();
+        Servicio servicio = existeServicio.get();
         if (!servicio.isEstado()) {
             throw new IllegalArgumentException("El servicio ya está desactivado");
         }
@@ -61,13 +61,13 @@ public class ServicioService {
 
     @Transactional
     public void editarServicio(Integer Id, String tipo, String descripcion, BigDecimal precioPorKm, Boolean estado) {
-        Optional<Servicio> servicioOpt= servicioRepository.findById(Id);
-        if (!servicioOpt.isPresent()) {
+        Optional<Servicio> existeServicio= servicioRepository.findById(Id);
+        if (!existeServicio.isPresent()) {
             throw new IllegalArgumentException("El servicio no existe");
         }
-        Servicio servicioActualizado= servicioOpt.get();
-        Optional<Servicio> servicioOptTipo = servicioRepository.findByTipo(tipo);
-        if (servicioOptTipo.isPresent() && !servicioOpt.get().getId().equals(Id)) {
+        Servicio servicioActualizado= existeServicio.get();
+        Optional<Servicio> existeServicioTipo = servicioRepository.findByTipo(tipo);
+        if (existeServicioTipo.isPresent() && !existeServicio.get().getId().equals(Id)) {
             throw new IllegalArgumentException("Este tipo de servicio ya existe");
         }
         if(tipo==null || tipo.trim().isEmpty()){
@@ -87,8 +87,8 @@ public class ServicioService {
 
     @Transactional
     public void activarServicio(Integer id) {
-        Optional <Servicio> servicioOpt = servicioRepository.findById(id);
-        if (!servicioOpt.isPresent()) {
+        Optional <Servicio> existeServicio = servicioRepository.findById(id);
+        if (!existeServicio.isPresent()) {
             throw new IllegalArgumentException("El servicio no existe");
         }
         Servicio servicio = servicioRepository.findById(id)
@@ -119,6 +119,9 @@ public class ServicioService {
     }
 
     public Page<Servicio> obtenerServiciosPorFiltro(Pageable pageable, Boolean estado) {
-        return servicioRepository.findByEstadoOrEstadoIsNull(estado, estado == null ? true : null, pageable);
+        if (estado == null) {
+            return servicioRepository.findAll(pageable); 
+        }
+        return servicioRepository.findByEstado(pageable, estado);
     }
 }

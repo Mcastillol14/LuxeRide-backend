@@ -16,9 +16,9 @@ public class LicenciaService {
 
     @Transactional
     public void registrarLicencia(Licencia licencia) {
-        Optional<Licencia> existingLicenciaByNumero = licenciaRepository.findByNumero(licencia.getNumero());
+        Optional<Licencia> existeLicencia = licenciaRepository.findByNumero(licencia.getNumero());
         
-        if (existingLicenciaByNumero.isPresent()) {
+        if (existeLicencia.isPresent()) {
             throw new IllegalArgumentException("El número de licencia ya existe");
         }
         if (licencia.getNumero() == null || licencia.getNumero().isEmpty()) {
@@ -39,12 +39,12 @@ public class LicenciaService {
     }
     @Transactional
     public void activarLicencia(Integer id) {
-        Optional<Licencia> licenciaOpt = licenciaRepository.findById(id);
-        if (!licenciaOpt.isPresent()) {
+        Optional<Licencia> existeLicencia = licenciaRepository.findById(id);
+        if (!existeLicencia.isPresent()) {
             throw new IllegalArgumentException("La licencia no existe");
         }
         
-        Licencia licencia = licenciaOpt.get();
+        Licencia licencia = existeLicencia.get();
         if (licencia.isEstado()) {
             throw new IllegalArgumentException("La licencia ya está activa");
         }
@@ -55,12 +55,12 @@ public class LicenciaService {
 
     @Transactional
     public void desactivarLicencia(Integer id) {
-        Optional<Licencia> licenciaOpt = licenciaRepository.findById(id);
-        if (!licenciaOpt.isPresent()) {
+        Optional<Licencia> existeLicencia = licenciaRepository.findById(id);
+        if (!existeLicencia.isPresent()) {
             throw new IllegalArgumentException("La licencia no existe");
         }
         
-        Licencia licencia = licenciaOpt.get();
+        Licencia licencia = existeLicencia.get();
         if (!licencia.isEstado()) {
             throw new IllegalArgumentException("La licencia ya está desactivada");
         }
