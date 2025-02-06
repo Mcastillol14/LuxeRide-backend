@@ -33,11 +33,10 @@ public class LicenciaService {
 
     public Page<Licencia> obtenerLicenciasPorFiltro(Pageable pageable, String numero) {
         if (numero != null && !numero.isEmpty()) {
-            return licenciaRepository.findByNumeroContaining(numero, pageable);
+            return licenciaRepository.findByNumeroContainingIgnoreCase(numero, pageable);
         }
         return licenciaRepository.findAll(pageable);
     }
-
     @Transactional
     public void activarLicencia(Integer id) {
         Optional<Licencia> licenciaOpt = licenciaRepository.findById(id);
