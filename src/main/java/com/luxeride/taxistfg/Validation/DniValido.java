@@ -12,5 +12,6 @@ public @interface DniValido {
     String message() default "DNI inválido";
     Class<?>[] groups() default {};
     Class<? extends Payload>[] payload() default {};
+    
 }
 
