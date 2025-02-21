@@ -7,10 +7,15 @@ import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
 public class AuthResponse {
-    private String token;
-    private String email;
+    private String token;  // El token JWT si la autenticación fue exitosa
+    private String message;  // El mensaje de error en caso de fallo
+
+    // Constructor para cuando hay un mensaje de error
+    public AuthResponse(String token, String message) {
+        this.token = token;
+        this.message = message;
+    }
 }
 

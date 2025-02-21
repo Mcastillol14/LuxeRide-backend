@@ -1,4 +1,5 @@
 package com.luxeride.taxistfg.Model;
+
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -21,6 +22,12 @@ public class Licencia {
     @Column(nullable = false)
     private boolean estado = true;
 
+    // Relación OneToOne: Una licencia está asociada a un único coche
+    // La propiedad mappedBy indica que la relación ya está mapeada en la clase
+    // Coche,
+    // específicamente en la propiedad "licencia"
+    // El fetch = FetchType.EAGER indica que la relación será cargada inmediatamente
+    // cuando se consulte la Licencia
     @OneToOne(mappedBy = "licencia", fetch = FetchType.EAGER)
     private Coche coche;
 }

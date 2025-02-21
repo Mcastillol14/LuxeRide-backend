@@ -2,22 +2,16 @@ package com.luxeride.taxistfg.Service;
 
 import com.luxeride.taxistfg.Model.Rol;
 import com.luxeride.taxistfg.Model.Usuario;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-
-import java.util.Optional;
-
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
-
-import jakarta.transaction.Transactional;
-
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import jakarta.transaction.Transactional;
+import java.util.Optional;
 
 @Service
 public class UsuarioService {
@@ -36,10 +30,11 @@ public class UsuarioService {
         Optional<Usuario> existingUsuarioByEmail = usuarioRepository.findByEmail(usuario.getEmail());
         Optional<Usuario> existingUsuarioByDni = usuarioRepository.findByDni(usuario.getDni());
 
-        if (existingUsuarioByEmail.isPresent()) {
-            throw new IllegalArgumentException("El correo electronico ya existe");
-        }
-        if (existingUsuarioByDni.isPresent()) {
+        if (existingUsuarioByDni.isPresent() && existingUsuarioByEmail.isPresent()) {
+            throw new IllegalArgumentException("El DNI y el correo ya existen");
+        } else if (existingUsuarioByEmail.isPresent()) {
+            throw new IllegalArgumentException("El correo electrónico ya existe");
+        } else if (existingUsuarioByDni.isPresent()) {
             throw new IllegalArgumentException("El DNI ya existe");
         }
         if (usuario.getNombre() == null || usuario.getNombre().isEmpty()) {
@@ -58,143 +53,97 @@ public class UsuarioService {
             throw new IllegalArgumentException("La contraseña es obligatoria");
         }
 
-        PasswordEncoder encriptarPassword = new BCryptPasswordEncoder();
-        String passwordEncriptada = encriptarPassword.encode(usuario.getPassword());
-        Usuario usuarioCreado = new Usuario();
-        usuarioCreado.setNombre(usuario.getNombre());
-        usuarioCreado.setApellidos(usuario.getApellidos());
-        usuarioCreado.setDni(usuario.getDni());
-        usuarioCreado.setEmail(usuario.getEmail());
-        usuarioCreado.setPassword(passwordEncriptada);
-        usuarioCreado.setRol(Rol.ROL_CLIENTE);
-        usuarioCreado.setAccountNonLocked(true);
-        usuarioRepository.save(usuarioCreado);
+        String passwordEncriptada = encriptadoPassword.encode(usuario.getPassword());
+        usuario.setPassword(passwordEncriptada);
+        usuario.setRol(Rol.ROL_CLIENTE);
+        usuario.setAccountNonLocked(true);
+
+        usuarioRepository.save(usuario);
     }
 
     @Transactional
-    public void editarUsuario(Integer Id, String nombre, String apellidos, String dni, String email) {
-        Optional<Usuario> existingUsuario = usuarioRepository.findById(Id);
-    
+    public void editarUsuario(Integer id, String nombre, String apellidos, String dni, String email) {
+        Optional<Usuario> existingUsuario = usuarioRepository.findById(id);
+
         if (!existingUsuario.isPresent()) {
             throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario que quieres editar no existe");
         }
-    
+
         Usuario usuarioActualizado = existingUsuario.get();
-    
-        Optional<Usuario> existingUsuarioByEmail = usuarioRepository.findByEmail(email);
-        if (existingUsuarioByEmail.isPresent() && !existingUsuarioByEmail.get().getId().equals(Id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso");
+
+        if (nombre != null && !nombre.trim().isEmpty()) {
+            usuarioActualizado.setNombre(nombre);
         }
-    
-        Optional<Usuario> existingUsuarioByDni = usuarioRepository.findByDni(dni);
-        if (existingUsuarioByDni.isPresent() && !existingUsuarioByDni.get().getId().equals(Id)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El DNI ya está en uso");
+        if (apellidos != null && !apellidos.trim().isEmpty()) {
+            usuarioActualizado.setApellidos(apellidos);
         }
-    
-        if (nombre == null || nombre.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El nombre es obligatorio");
+        if (dni != null && !dni.trim().isEmpty()) {
+            usuarioActualizado.setDni(dni);
         }
-        if (apellidos == null || apellidos.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Los apellidos son obligatorios");
+        if (email != null && !email.trim().isEmpty()) {
+            Optional<Usuario> existingUsuarioByEmail = usuarioRepository.findByEmail(email);
+            if (existingUsuarioByEmail.isPresent() && !existingUsuarioByEmail.get().getId().equals(id)) {
+                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico ya está en uso");
+            }
+            usuarioActualizado.setEmail(email);
         }
-        if (dni == null || dni.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El DNI es obligatorio");
-        }
-        if (email == null || email.trim().isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El correo electrónico es obligatorio");
-        }
-    
-        usuarioActualizado.setNombre(nombre);
-        usuarioActualizado.setApellidos(apellidos);
-        usuarioActualizado.setDni(dni);
-        usuarioActualizado.setEmail(email);
-    
+
         usuarioRepository.save(usuarioActualizado);
     }
-    
-    
-    public Optional<Usuario> obtenerUsuarioPorEmail(String email) {
-        return usuarioRepository.findByEmail(email);
-    }
 
-    public Page<Usuario> obtenerTodosLosUsuarios(Pageable pageable) {
-        return usuarioRepository.findAll(pageable);
-
-    }
-    public Page<Usuario> obtenerUsuariosPorFiltro(Pageable pageable, String rol, String dni) {
-        Rol rolEnum = (rol != null && !rol.isEmpty()) ? Rol.valueOf(rol) : null;
-    
-        return usuarioRepository.findByRolAndDni(pageable, rolEnum, dni);
-    }
-    
-
-    @Transactional
-    public void addTaxista(Usuario usuario) {
-        Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
-        if (!existingUsuario.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "El usuario no existe");
+    public Page<Usuario> obtenerUsuariosPorFiltro(Pageable pageable, String dni) {
+        if (dni != null && !dni.isEmpty()) {
+            return usuarioRepository.findByDni(pageable, dni);
+        } else {
+            return usuarioRepository.findAll(pageable);
         }
-        Usuario usuarioActualizado = existingUsuario.get();
-        if (usuarioActualizado.getRol() == Rol.ROL_TAXISTA) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario ya es taxista");
-        }
-        usuarioActualizado.setRol(Rol.ROL_TAXISTA);
-
-        usuarioRepository.save(usuarioActualizado);
     }
 
     @Transactional
-    public void eliminarTaxista(Usuario usuario) {
-        Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
-        if (!existingUsuario.isPresent()) {
-            throw new IllegalArgumentException("El usuario que quieres eliminar de taxista no existe");
+    public void bloquearCuenta(Integer id) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+        if (!usuarioOpt.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         }
-        Usuario usuarioActualizado = existingUsuario.get();
-        if (usuarioActualizado.getRol() == Rol.ROL_CLIENTE) {
-            throw new IllegalArgumentException("El usuario que quieres eliminar de taxita no es taxista");
-        }
-        usuarioActualizado.setRol(Rol.ROL_CLIENTE);
-        usuarioRepository.save(usuarioActualizado);
-    }
-
-    public Page<Usuario> obtenerTodosLosTaxistas(Pageable pageable) {
-        return usuarioRepository.findByRol(Rol.ROL_TAXISTA, pageable);
+        Usuario usuario = usuarioOpt.get();
+        usuario.setAccountNonLocked(false);
+        usuarioRepository.save(usuario);
     }
 
     @Transactional
-    public void desactivarCuenta(Usuario usuario) {
-        Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
-
-        if (!existingUsuario.isPresent()) {
-            throw new IllegalArgumentException("El usuario que quieres desactivar no existe");
+    public void desbloquearCuenta(Integer id) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+        if (!usuarioOpt.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         }
-
-        Usuario usuarioActualizado = existingUsuario.get();
-
-        if (!usuarioActualizado.isAccountNonLocked()) {
-            return;
-        }
-
-        usuarioActualizado.setAccountNonLocked(false);
-        usuarioRepository.save(usuarioActualizado);
+        Usuario usuario = usuarioOpt.get();
+        usuario.setAccountNonLocked(true);
+        usuarioRepository.save(usuario);
     }
 
     @Transactional
-    public void activarCuenta(Usuario usuario) {
-        Optional<Usuario> existingUsuario = usuarioRepository.findByDni(usuario.getDni());
-
-        if (!existingUsuario.isPresent()) {
-            throw new IllegalArgumentException("El usuario que quieres activar no existe");
+    public void addTaxista(Integer id) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+        if (!usuarioOpt.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
         }
-
-        Usuario usuarioActualizado = existingUsuario.get();
-
-        if (usuarioActualizado.isAccountNonLocked()) {
-            return; 
-        }
-
-        usuarioActualizado.setAccountNonLocked(true);
-        usuarioRepository.save(usuarioActualizado);
+        Usuario usuario = usuarioOpt.get();
+        usuario.setRol(Rol.ROL_TAXISTA);
+        usuarioRepository.save(usuario);
     }
 
+    @Transactional
+    public void deleteTaxista(Integer id) {
+        Optional<Usuario> usuarioOpt = usuarioRepository.findById(id);
+        if (!usuarioOpt.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado");
+        }
+        Usuario usuario = usuarioOpt.get();
+        if (usuario.getRol() == Rol.ROL_TAXISTA) {
+            usuario.setRol(Rol.ROL_CLIENTE);
+            usuarioRepository.save(usuario);
+        } else {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene el rol de taxista");
+        }
+    }
 }

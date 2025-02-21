@@ -1,14 +1,12 @@
 package com.luxeride.taxistfg.Service;
 
-import java.math.BigDecimal;
-import java.util.Optional;
-import org.springframework.stereotype.Service;
-import org.springframework.beans.factory.annotation.Autowired;
-import jakarta.transaction.Transactional;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import com.luxeride.taxistfg.Model.Servicio;
 import com.luxeride.taxistfg.Repository.ServicioRepository;
+import org.springframework.stereotype.Service;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import jakarta.transaction.Transactional;
 
 @Service
 public class ServicioService {
@@ -16,112 +14,64 @@ public class ServicioService {
     @Autowired
     private ServicioRepository servicioRepository;
 
-    private Servicio obtenerServicioPorTipo(String tipo) {
-        return servicioRepository.findByTipo(tipo)
-                .orElseThrow(() -> new IllegalArgumentException("El servicio no existe"));
-    }
-
     @Transactional
-    public void registrarServicio(Servicio servicio) {
-        Optional<Servicio> existeServicio = servicioRepository.findByTipo(servicio.getTipo());
-        if (existeServicio.isPresent()) {
+    public void crearServicio(Servicio servicio) {
+        if (servicioRepository.findByTipo(servicio.getTipo()).isPresent()) {
             throw new IllegalArgumentException("Este tipo de servicio ya existe");
         }
-        if (servicio.getTipo() == null || servicio.getTipo().isEmpty()) {
+
+        if (servicio.getTipo() == null || servicio.getTipo().trim().isEmpty()) {
             throw new IllegalArgumentException("El tipo es obligatorio");
         }
-        if (servicio.getDescripcion() == null || servicio.getDescripcion().isEmpty()) {
-            throw new IllegalArgumentException("La descripcion es obligatoria");
+        if (servicio.getDescripcion() == null || servicio.getDescripcion().trim().isEmpty()) {
+            throw new IllegalArgumentException("La descripción es obligatoria");
         }
         if (servicio.getPrecioPorKm() == null) {
             throw new IllegalArgumentException("El precio es obligatorio");
         }
 
-        Servicio servicioCreado = new Servicio();
-        servicioCreado.setTipo(servicio.getTipo());
-        servicioCreado.setDescripcion(servicio.getDescripcion());
-        servicioCreado.setPrecioPorKm(servicio.getPrecioPorKm());
-        servicioCreado.setEstado(true);
-        servicioRepository.save(servicioCreado);
-    }
-
-    @Transactional
-    public void desactivarServicio(Integer id) {
-        Optional<Servicio> existeServicio = servicioRepository.findById(id);
-        if (!existeServicio.isPresent()) {
-            throw new IllegalArgumentException("El servicio no existe");
-        }
-        Servicio servicio = existeServicio.get();
-        if (!servicio.isEstado()) {
-            throw new IllegalArgumentException("El servicio ya está desactivado");
-        }
-        servicio.setEstado(false);
-        servicioRepository.save(servicio);
-    }
-
-    @Transactional
-    public void editarServicio(Integer Id, String tipo, String descripcion, BigDecimal precioPorKm, Boolean estado) {
-        Optional<Servicio> existeServicio= servicioRepository.findById(Id);
-        if (!existeServicio.isPresent()) {
-            throw new IllegalArgumentException("El servicio no existe");
-        }
-        Servicio servicioActualizado= existeServicio.get();
-        Optional<Servicio> existeServicioTipo = servicioRepository.findByTipo(tipo);
-        if (existeServicioTipo.isPresent() && !existeServicio.get().getId().equals(Id)) {
-            throw new IllegalArgumentException("Este tipo de servicio ya existe");
-        }
-        if(tipo==null || tipo.trim().isEmpty()){
-            throw new IllegalArgumentException("El tipo es obligatorio");
-        }
-        if(descripcion==null || descripcion.trim().isEmpty()){
-            throw new IllegalArgumentException("La descripcion es obligatoria");
-        }
-        if (precioPorKm == null) {
-            throw new IllegalArgumentException("El precio es obligatorio");
-        }
-        servicioActualizado.setTipo(tipo);
-        servicioActualizado.setDescripcion(descripcion);
-        servicioActualizado.setPrecioPorKm(precioPorKm);
-        servicioRepository.save(servicioActualizado);
-    }
-
-    @Transactional
-    public void activarServicio(Integer id) {
-        Optional <Servicio> existeServicio = servicioRepository.findById(id);
-        if (!existeServicio.isPresent()) {
-            throw new IllegalArgumentException("El servicio no existe");
-        }
-        Servicio servicio = servicioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El servicio no existe"));
-        if (servicio.isEstado()) {
-            throw new IllegalArgumentException("El servicio ya está activo");
-        }
         servicio.setEstado(true);
         servicioRepository.save(servicio);
     }
 
     @Transactional
-    public void cambiarPrecio(Servicio servicio) {
-        Servicio servicioActualizado = obtenerServicioPorTipo(servicio.getTipo());
-        if (servicio.getPrecioPorKm() == null) {
-            throw new IllegalArgumentException("El nuevo precio no puede estar vacío");
+    public void borrarServicio(Integer id) {
+        if (!servicioRepository.existsById(id)) {
+            throw new IllegalArgumentException("El servicio no existe");
         }
-        servicioActualizado.setPrecioPorKm(servicio.getPrecioPorKm());
-        servicioRepository.save(servicioActualizado);
+        servicioRepository.deleteById(id);
     }
 
-    public Page<Servicio> listarServiciosActivos(Pageable pageable) {
-        return servicioRepository.findByEstadoTrue(pageable);
-    }
+    @Transactional
+    public void activarServicio(Integer id) {
+        Servicio servicio = servicioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El servicio no existe"));
 
-    public Page<Servicio> listarTodosLosServicios(Pageable pageable) {
-        return servicioRepository.findAll(pageable);
-    }
-
-    public Page<Servicio> obtenerServiciosPorFiltro(Pageable pageable, Boolean estado) {
-        if (estado == null) {
-            return servicioRepository.findAll(pageable); 
+        if (servicio.isEstado()) {
+            throw new IllegalArgumentException("El servicio ya está activo");
         }
-        return servicioRepository.findByEstado(pageable, estado);
+
+        servicio.setEstado(true);
+        servicioRepository.save(servicio);
+    }
+
+    @Transactional
+    public void desactivarServicio(Integer id) {
+        Servicio servicio = servicioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El servicio no existe"));
+
+        if (!servicio.isEstado()) {
+            throw new IllegalArgumentException("El servicio ya está desactivado");
+        }
+
+        servicio.setEstado(false);
+        servicioRepository.save(servicio);
+    }
+
+    public Page<Servicio>  obtenerServicios(String tipo, Pageable pageable) {
+        if (tipo == null || tipo.trim().isEmpty()) {
+            return servicioRepository.findAll(pageable);
+        }
+        return servicioRepository.buscarServiciosPorTipo(tipo, pageable);
     }
 }

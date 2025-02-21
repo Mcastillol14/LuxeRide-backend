@@ -3,6 +3,7 @@ package com.luxeride.taxistfg.Repository;
 import com.luxeride.taxistfg.Model.Usuario;
 import com.luxeride.taxistfg.Model.Rol;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
@@ -17,17 +18,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Integer> {
 
     Page<Usuario> findAll(Pageable pageable);
 
-    Page<Usuario> findByRol(Rol rol, Pageable pageable);
+    @Query("SELECT u FROM Usuario u WHERE (:dni IS NULL OR u.dni LIKE %:dni%)")
+    Page<Usuario> findByDni(Pageable pageable, String dni);
 
-    boolean existsByEmail(String email);
-
-    boolean existsByDni(String dni);
-
-    @Query("SELECT u FROM Usuario u WHERE (:rol IS NULL OR u.rol = :rol) AND (:dni IS NULL OR u.dni LIKE %:dni%)")
-    Page<Usuario> findByRolAndDni(Pageable pageable, Rol rol, String dni);
-
-    Page<Usuario> findByAccountNonLockedFalse(Pageable pageable);
-
-    Page<Usuario> findByAccountNonLockedTrue(Pageable pageable);
+    List<Usuario> findByRol(Rol rol);
 
 }

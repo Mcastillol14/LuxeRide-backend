@@ -12,7 +12,9 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Set;
+import java.util.Objects;
 
 @Data
 @NoArgsConstructor
@@ -47,11 +49,10 @@ public class Usuario implements UserDetails {
     private Rol rol;
 
     @Column(nullable = false)
-    private boolean accountNonLocked = true; 
+    private boolean accountNonLocked = true;
 
-    @ManyToMany
-    @JoinTable(name = "usuario_coche", joinColumns = @JoinColumn(name = "usuario_id"), inverseJoinColumns = @JoinColumn(name = "coche_id"))
-    private Set<Coche> coches;
+    @ManyToMany(mappedBy = "usuarios")
+    private Set<Coche> coches = new HashSet<>();
 
     @OneToMany(mappedBy = "cliente")
     private Set<Viaje> viajesComoCliente;
@@ -87,5 +88,19 @@ public class Usuario implements UserDetails {
     @Override
     public boolean isEnabled() {
         return true;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Usuario usuario = (Usuario) o;
+        return Objects.equals(id, usuario.id) &&
+                Objects.equals(dni, usuario.dni);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, dni);
     }
 }

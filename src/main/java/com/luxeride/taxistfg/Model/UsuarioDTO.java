@@ -13,7 +13,7 @@ public class UsuarioDTO {
     private String apellidos;
     private String dni;
     private String email;
-    private Rol rol;  
+    private Rol rol;
     private boolean accountNonLocked;
 }
 

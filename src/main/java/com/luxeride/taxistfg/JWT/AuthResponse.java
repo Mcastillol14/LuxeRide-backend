@@ -1,14 +1,20 @@
 package com.luxeride.taxistfg.JWT;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
 
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
 public class AuthResponse {
-    String token;
+    private String token;
+    private String message;
+
+    public AuthResponse(String token, String message) {
+        this.token = token;
+        this.message = message;
+    }
+
+    @Builder
+    public static AuthResponse withTokenAndMessage(String token, String message) {
+        return new AuthResponse(token, message);
+    }
 }

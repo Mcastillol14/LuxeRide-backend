@@ -1,10 +1,9 @@
 package com.luxeride.taxistfg.Controller;
 
-import java.util.HashMap;
-import java.util.Map;
-
+import com.luxeride.taxistfg.Model.Coche;
+import com.luxeride.taxistfg.Service.CocheService;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,56 +12,43 @@ import org.springframework.web.server.ResponseStatusException;
 import com.luxeride.taxistfg.Model.Licencia;
 import com.luxeride.taxistfg.Model.Usuario;
 import com.luxeride.taxistfg.Service.UsuarioService;
-import com.luxeride.taxistfg.Util.DniRequest;
-import com.luxeride.taxistfg.Model.UsuarioDTO;
+
 import com.luxeride.taxistfg.Model.Servicio;
 import com.luxeride.taxistfg.Service.ServicioService;
 import com.luxeride.taxistfg.Service.LicenciaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/admin")
 @RequiredArgsConstructor
 public class ControladorAdmin {
-    private final UsuarioService usuarioService;
-    private final LicenciaService licenciaService;
+    @Autowired
+    private CocheService cocheService;
+    @Autowired
+    private UsuarioService usuarioService;
+    @Autowired
+    private LicenciaService licenciaService;
+    @Autowired
     private final ServicioService servicioService;
 
+    //  Usuarios
     @GetMapping("/allUsuarios")
-    public ResponseEntity<Page<UsuarioDTO>> allUsuarios(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String rol,
-            @RequestParam(required = false) String dni) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        Page<Usuario> usuarioPage = usuarioService.obtenerUsuariosPorFiltro(pageable, rol, dni);
-
-        Page<UsuarioDTO> usuarioDTOPage = usuarioPage.map(usuario -> new UsuarioDTO(
-                usuario.getId(),
-                usuario.getNombre(),
-                usuario.getApellidos(),
-                usuario.getDni(),
-                usuario.getEmail(),
-                usuario.getRol(),
-                usuario.isAccountNonLocked()));
-
-        return ResponseEntity.ok(usuarioDTOPage);
+    public Page<Usuario> obtenerUsuarios(Pageable pageable, @RequestParam(required = false) String dni) {
+        return usuarioService.obtenerUsuariosPorFiltro(pageable, dni);
     }
 
     @PutMapping("/editarUsuario/{id}")
     public ResponseEntity<String> editarUsuario(
             @PathVariable Integer id,
-            @RequestBody UsuarioDTO usuarioDTO) {
+            @RequestParam(required = false) String nombre,
+            @RequestParam(required = false) String apellidos,
+            @RequestParam(required = false) String dni,
+            @RequestParam(required = false) String email) {
         try {
-            usuarioService.editarUsuario(id, usuarioDTO.getNombre(), usuarioDTO.getApellidos(), usuarioDTO.getDni(),
-                    usuarioDTO.getEmail());
+            usuarioService.editarUsuario(id, nombre, apellidos, dni, email);
             return ResponseEntity.ok("Usuario editado correctamente.");
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
@@ -70,47 +56,87 @@ public class ControladorAdmin {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error inesperado al editar usuario.");
         }
     }
-    @PutMapping("/editarServicio/{id}")
-    public ResponseEntity<String> editarServicio(
-            @PathVariable Integer id,
-            @RequestBody Servicio servicio) {
+
+    @PutMapping("/bloquearCuenta/{id}")
+    public ResponseEntity<String> bloquearCuenta(@PathVariable Integer id) {
         try {
-            servicioService.editarServicio(id, servicio.getTipo(), servicio.getDescripcion(), servicio.getPrecioPorKm(), servicio.isEstado());
-            return ResponseEntity.ok("Servicio editado correctamente.");
+            usuarioService.bloquearCuenta(id);
+            return ResponseEntity.ok("Cuenta bloqueada correctamente.");
         } catch (ResponseStatusException e) {
             return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error inesperado al editar servicio.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error inesperado al bloquear la cuenta.");
         }
     }
 
-    @GetMapping("/allLicencias")
-    public ResponseEntity<?> getAllLicencias(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) String numero) {
+    @PutMapping("/desbloquearCuenta/{id}")
+    public ResponseEntity<String> desbloquearCuenta(@PathVariable Integer id) {
         try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Licencia> licencias = licenciaService.obtenerLicenciasPorFiltro(pageable, numero);
-
-            Page<Map<String, Object>> licenciasInfo = licencias.map(licencia -> {
-                Map<String, Object> licenciaInfo = new HashMap<>();
-                licenciaInfo.put("id", licencia.getId());
-                licenciaInfo.put("numero", licencia.getNumero());
-                licenciaInfo.put("estado", licencia.isEstado());
-                licenciaInfo.put("asignada", licencia.getCoche() != null);
-                if (licencia.getCoche() != null) {
-                    licenciaInfo.put("cocheId", licencia.getCoche().getId());
-                }
-                return licenciaInfo;
-            });
-
-            return ResponseEntity.ok(licenciasInfo);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
+            usuarioService.desbloquearCuenta(id);
+            return ResponseEntity.ok("Cuenta desbloqueada correctamente.");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al obtener las licencias: " + e.getMessage());
+                    .body("Error inesperado al desbloquear la cuenta.");
+        }
+    }
+
+    @PutMapping("/addTaxista/{id}")
+    public ResponseEntity<String> addTaxista(@PathVariable Integer id) {
+        try {
+            usuarioService.addTaxista(id);
+            return ResponseEntity.ok("El usuario ahora es un taxista.");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error inesperado al asignar el rol de taxista.");
+        }
+    }
+
+    @PutMapping("/deleteTaxista/{id}")
+    public ResponseEntity<String> deleteTaxista(@PathVariable Integer id) {
+        try {
+            usuarioService.deleteTaxista(id);
+            return ResponseEntity.ok("El rol de taxista ha sido eliminado del usuario.");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error inesperado al eliminar el rol de taxista.");
+        }
+    }
+
+    //  Licencias
+    @PostMapping("/addLicencia")
+    public ResponseEntity<String> crearLicencia(@RequestBody Licencia licencia) {
+        try {
+            licenciaService.registrarLicencia(licencia);
+            return ResponseEntity.ok("Licencia creada exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/deleteLicencia/{id}")
+    public ResponseEntity<String> borrarLicencia(@PathVariable Integer id) {
+        try {
+            licenciaService.eliminarLicencia(id);
+            return ResponseEntity.ok("Licencia eliminada exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/editarLicencia/{id}")
+    public ResponseEntity<String> editarLicencia(@PathVariable Integer id, @RequestBody Licencia licencia) {
+        try {
+            licenciaService.editarLicencia(id, licencia);
+            return ResponseEntity.ok("Licencia editada exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -118,25 +144,9 @@ public class ControladorAdmin {
     public ResponseEntity<String> activarLicencia(@PathVariable Integer id) {
         try {
             licenciaService.activarLicencia(id);
-            return ResponseEntity.ok("Licencia activada correctamente");
+            return ResponseEntity.ok("Licencia activada exitosamente");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al activar la licencia");
-        }
-    }
-
-    @PutMapping("/activarServicio/{id}")
-    public ResponseEntity<String> activarServicio(@PathVariable Integer id) {
-        try {
-            servicioService.activarServicio(id);
-            return ResponseEntity.ok("Servicio activado correctamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al activar el servicio");
         }
     }
 
@@ -144,12 +154,50 @@ public class ControladorAdmin {
     public ResponseEntity<String> desactivarLicencia(@PathVariable Integer id) {
         try {
             licenciaService.desactivarLicencia(id);
-            return ResponseEntity.ok("Licencia desactivada correctamente");
+            return ResponseEntity.ok("Licencia desactivada exitosamente");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al desactivar la licencia");
+        }
+    }
+
+    @GetMapping("/allLicencias")
+    public Page<Licencia> obtenerLicencias(Pageable pageable, @RequestParam(required = false) String numero) {
+        return licenciaService.obtenerLicenciasPorFiltro(pageable, numero);
+    }
+
+    // Servicios
+    @PostMapping("/addServicio")
+    public ResponseEntity<String> crearServicio(@RequestBody Servicio servicio) {
+        try {
+            servicioService.crearServicio(servicio);
+            return ResponseEntity.ok("Servicio creado exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @GetMapping("/allServicios")
+    public Page<Servicio> obtenerServicios(Pageable pageable, @RequestParam(required = false) String tipo) {
+        return servicioService.obtenerServicios(tipo, pageable);
+    }
+
+    @DeleteMapping("/deleteServicio/{id}")
+    public ResponseEntity<String> borrarServicio(@PathVariable Integer id) {
+        try {
+            servicioService.borrarServicio(id);
+            return ResponseEntity.ok("Servicio eliminado exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PutMapping("/activarServicio/{id}")
+    public ResponseEntity<String> activarServicio(@PathVariable Integer id) {
+        try {
+            servicioService.activarServicio(id);
+            return ResponseEntity.ok("Servicio activado exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
@@ -157,105 +205,110 @@ public class ControladorAdmin {
     public ResponseEntity<String> desactivarServicio(@PathVariable Integer id) {
         try {
             servicioService.desactivarServicio(id);
-            return ResponseEntity.ok("Servicio desactivado correctamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al desactivar el servicio");
-        }
-    }
-
-    @PostMapping("/registrarLicencia")
-    public ResponseEntity<String> registrarLicencia(@RequestBody Licencia licencia) {
-        try {
-            licenciaService.registrarLicencia(licencia);
-            return ResponseEntity.ok("Licencia registrada correctamente.");
+            return ResponseEntity.ok("Servicio desactivado exitosamente");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @PostMapping("/registrarServicio")
-    public ResponseEntity<String> registrarServicio(@RequestBody Servicio servicio) {
+    // Coches
+    @PostMapping("/addCoche")
+    public ResponseEntity<String> registrarCoche(@RequestBody Coche coche) {
         try {
-            servicioService.registrarServicio(servicio);
-            return ResponseEntity.ok("Servicio registrado correctamente.");
+            cocheService.registrarCoche(coche);
+            return ResponseEntity.ok("Coche registrado exitosamente");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-
-    @PutMapping("/addTaxista")
-    public ResponseEntity<String> addTaxista(@RequestBody Usuario usuario) {
-        try {
-            usuarioService.addTaxista(usuario);
-            return ResponseEntity.ok("El usuario ha sido actualizado a taxista correctamente.");
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error inesperado al añadir taxista.");
-        }
+    @GetMapping("/allCoches")
+    public Page<Coche> obtenerCoches(Pageable pageable, @RequestParam(required = false) String matricula) {
+        return cocheService.listarCoches(pageable, matricula);
     }
-
-    @PutMapping("/eliminarTaxista")
-    public ResponseEntity<String> eliminarTaxista(@RequestBody Usuario usuario) {
+    @PutMapping("/activarCoche/{id}")
+    public ResponseEntity<String> activarCoche(@PathVariable Integer id) {
         try {
-            usuarioService.eliminarTaxista(usuario);
-            return ResponseEntity.ok("El usuario ha sido eliminado de taxista correctamente.");
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error inesperado al eliminar taxista.");
-        }
-    }
-
-    @PutMapping("/activarCuenta")
-    public ResponseEntity<String> activarCuenta(@RequestBody DniRequest request) {
-        try {
-            Usuario usuario = new Usuario();
-            usuario.setDni(request.getDni());
-            usuarioService.activarCuenta(usuario);
-            return ResponseEntity.ok("Cuenta activada correctamente.");
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error inesperado al activar la cuenta.");
-        }
-    }
-
-    @PutMapping("/desactivarCuenta")
-    public ResponseEntity<String> desactivarCuenta(@RequestBody DniRequest request) {
-        try {
-            Usuario usuario = new Usuario();
-            usuario.setDni(request.getDni());
-            usuarioService.desactivarCuenta(usuario);
-            return ResponseEntity.ok("Cuenta desactivada correctamente.");
-        } catch (ResponseStatusException e) {
-            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error inesperado al desactivar la cuenta.");
-        }
-    }
-
-    @GetMapping("/allServicios")
-    public ResponseEntity<?> getAllServicios(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(required = false) Boolean estado) {
-        try {
-            Pageable pageable = PageRequest.of(page, size);
-            Page<Servicio> servicios = servicioService.obtenerServiciosPorFiltro(pageable, estado);
-            return ResponseEntity.ok(servicios);
+            cocheService.activarCoche(id);
+            return ResponseEntity.ok("Coche activado exitosamente");
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Error al obtener los servicios: " + e.getMessage());
         }
     }
+    @PutMapping("/desactivarCoche/{id}")
+    public ResponseEntity<String> desactivarCoche(@PathVariable Integer id) {
+        try {
+            cocheService.desactivarCoche(id);
+            return ResponseEntity.ok("Coche desactivado exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PutMapping("/addLicenciaToCoche/{cocheId}/{licenciaId}")
+    public ResponseEntity<String> addLicenciaToCoche(@PathVariable Integer cocheId, @PathVariable Integer licenciaId) {
+        try {
+            cocheService.addLicenciaToCoche(cocheId, licenciaId);
+            return ResponseEntity.ok("Licencia asignada al coche exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PutMapping("/disponibleCoche/{id}")
+    public ResponseEntity<String> disponibleCoche(@PathVariable Integer id) {
+        try {
+            cocheService.disponibleCoche(id);
+            return ResponseEntity.ok("Coche marcado como disponible");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PutMapping("/noDisponibleCoche/{id}")
+    public ResponseEntity<String> noDisponibleCoche(@PathVariable Integer id) {
+        try {
+            cocheService.noDisponibleCoche(id);
+            return ResponseEntity.ok("Coche marcado como no disponible");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @DeleteMapping("/eliminarCoche/{id}")
+    public ResponseEntity<String> eliminarCoche(@PathVariable Integer id) {
+        try {
+            cocheService.eliminarCoche(id);
+            return ResponseEntity.ok("Coche eliminado exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @PutMapping("/addUsuarioToCoche/{cocheId}/{usuarioId}")
+    public ResponseEntity<String> addUsuarioToCoche(@PathVariable Integer cocheId, @PathVariable Integer usuarioId) {
+        try {
+            cocheService.addUsuarioToCoche(cocheId, usuarioId);
+            return ResponseEntity.ok("Usuario asignado al coche exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @DeleteMapping("/deleteUsuarioToCoche/{cocheId}/{usuarioId}")
+    public ResponseEntity<String> deleteUsuarioToCoche(@PathVariable Integer cocheId, @PathVariable Integer usuarioId) {
+        try {
+            cocheService.deleteUsuarioToCoche(cocheId, usuarioId);
+            return ResponseEntity.ok("Usuario eliminado del coche exitosamente");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+    @GetMapping("/usuariosCoche/{id}")
+    public ResponseEntity<List<Usuario>> obtenerUsuariosDeCoche(@PathVariable Integer id) {
+        try {
+            List<Usuario> usuarios = cocheService.obtenerUsuariosDeCoche(id);
+            return ResponseEntity.ok(usuarios);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(null);
+        }
+    }
+
+
+
+
 
 }
