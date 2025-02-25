@@ -1,5 +1,6 @@
 package com.luxeride.taxistfg.Model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -30,6 +31,7 @@ public class Coche {
 
     @OneToOne
     @JoinColumn(name = "licencia_id", unique = true)
+    @JsonIgnoreProperties("coche")
     private Licencia licencia;
 
     @Column(nullable = false)
@@ -38,11 +40,9 @@ public class Coche {
     @Column(nullable = false)
     private boolean estado = true;
 
-    @ManyToMany
-    @JoinTable(name = "usuario_coche",
-            joinColumns = @JoinColumn(name = "coche_id"),
-            inverseJoinColumns = @JoinColumn(name = "usuario_id"))
-    private Set<Usuario> usuarios = new HashSet<>();
+    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "coches")
+    @JsonIgnoreProperties({"coches", "viajesComoCliente", "viajesComoTaxista"})
+    private Set<Usuario> usuarios;
 
     @OneToMany(mappedBy = "coche")
     private Set<Viaje> viajes;

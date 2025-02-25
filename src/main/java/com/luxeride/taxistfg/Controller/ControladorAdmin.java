@@ -1,6 +1,6 @@
 package com.luxeride.taxistfg.Controller;
 
-import com.luxeride.taxistfg.Model.Coche;
+import com.luxeride.taxistfg.Model.*;
 import com.luxeride.taxistfg.Service.CocheService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -9,16 +9,14 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.server.ResponseStatusException;
 
-import com.luxeride.taxistfg.Model.Licencia;
-import com.luxeride.taxistfg.Model.Usuario;
 import com.luxeride.taxistfg.Service.UsuarioService;
 
-import com.luxeride.taxistfg.Model.Servicio;
 import com.luxeride.taxistfg.Service.ServicioService;
 import com.luxeride.taxistfg.Service.LicenciaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
 
 @RestController
@@ -298,16 +296,14 @@ public class ControladorAdmin {
         }
     }
     @GetMapping("/usuariosCoche/{id}")
-    public ResponseEntity<List<Usuario>> obtenerUsuariosDeCoche(@PathVariable Integer id) {
+    public ResponseEntity<List<UsuarioDTO>> obtenerUsuariosDeCoche(@PathVariable Integer id) {
         try {
-            List<Usuario> usuarios = cocheService.obtenerUsuariosDeCoche(id);
+            List<UsuarioDTO> usuarios = cocheService.obtenerUsuariosDeCoche(id);
             return ResponseEntity.ok(usuarios);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(null);
+            return ResponseEntity.badRequest().body(Collections.emptyList());
         }
     }
-
-
 
 
 

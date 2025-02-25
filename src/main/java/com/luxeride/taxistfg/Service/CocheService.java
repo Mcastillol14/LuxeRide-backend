@@ -1,9 +1,6 @@
 package com.luxeride.taxistfg.Service;
 
-import com.luxeride.taxistfg.Model.Coche;
-import com.luxeride.taxistfg.Model.Licencia;
-import com.luxeride.taxistfg.Model.Rol;
-import com.luxeride.taxistfg.Model.Usuario;
+import com.luxeride.taxistfg.Model.*;
 import com.luxeride.taxistfg.Repository.CocheRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,10 +10,9 @@ import org.springframework.stereotype.Service;
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
 import com.luxeride.taxistfg.Repository.LicenciaRepository;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class CocheService {
@@ -198,13 +194,27 @@ public class CocheService {
     }
 
     @Transactional
-    public List<Usuario> obtenerUsuariosDeCoche(Integer cocheId) {
+    public List<UsuarioDTO> obtenerUsuariosDeCoche(Integer cocheId) {
         Optional<Coche> existeCoche = cocheRepository.findById(cocheId);
         if (!existeCoche.isPresent()) {
             throw new IllegalArgumentException("El coche con el ID proporcionado no existe");
         }
 
         Coche coche = existeCoche.get();
-        return new ArrayList<>(coche.getUsuarios());
+        return coche.getUsuarios().stream()
+                .map(this::convertToDTO)
+                .collect(Collectors.toList());
+    }
+
+    private UsuarioDTO convertToDTO(Usuario usuario) {
+        return new UsuarioDTO(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getApellidos(),
+                usuario.getDni(),
+                usuario.getEmail(),
+                usuario.getRol(),
+                usuario.isAccountNonLocked()
+        );
     }
 }
