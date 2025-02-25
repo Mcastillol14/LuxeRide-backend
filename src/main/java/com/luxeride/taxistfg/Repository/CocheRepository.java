@@ -13,8 +13,6 @@ public interface CocheRepository extends JpaRepository<Coche, Integer> {
 
     Optional<Coche> findByMatricula(String matricula);
 
-    Optional<Coche> findByLicenciaId(Integer licenciaId);
-
     @Query("SELECT c FROM Coche c WHERE c.matricula LIKE  %:matricula%")
     Page<Coche> buscarCochesPorMatricula(@Param("matricula") String matricula, Pageable pageable);
 

@@ -43,7 +43,6 @@ public class CocheService {
         CocheCreado.setMarca(coche.getMarca());
         CocheCreado.setModelo(coche.getModelo());
         CocheCreado.setDisponible(false);
-        CocheCreado.setEstado(true);
         cocheRepository.save(CocheCreado);
     }
 
@@ -54,33 +53,6 @@ public class CocheService {
         return cocheRepository.findAll(pageable);
     }
 
-    @Transactional
-    public void activarCoche(Integer id) {
-        Optional<Coche> existeCoche = cocheRepository.findById(id);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("La matricula no existe");
-        }
-        Coche coche = existeCoche.get();
-        if (coche.isEstado()) {
-            throw new IllegalArgumentException("La matricula ya esta activa");
-        }
-        coche.setEstado(true);
-        cocheRepository.save(coche);
-    }
-
-    @Transactional
-    public void desactivarCoche(Integer id) {
-        Optional<Coche> existeCoche = cocheRepository.findById(id);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("La matricula no existe");
-        }
-        Coche coche = existeCoche.get();
-        if (!coche.isEstado()) {
-            throw new IllegalArgumentException("La matricula ya esta desactiva");
-        }
-        coche.setEstado(false);
-        cocheRepository.save(coche);
-    }
 
     @Transactional
     public void disponibleCoche(Integer id) {

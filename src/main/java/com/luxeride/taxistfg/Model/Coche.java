@@ -37,8 +37,7 @@ public class Coche {
     @Column(nullable = false)
     private boolean disponible = false;
 
-    @Column(nullable = false)
-    private boolean estado = true;
+
 
     @ManyToMany(fetch = FetchType.LAZY, mappedBy = "coches")
     @JsonIgnoreProperties({"coches", "viajesComoCliente", "viajesComoTaxista"})

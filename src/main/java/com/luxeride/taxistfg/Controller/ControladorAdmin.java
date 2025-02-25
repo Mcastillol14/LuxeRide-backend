@@ -203,24 +203,7 @@ public class ControladorAdmin {
     public Page<Coche> obtenerCoches(Pageable pageable, @RequestParam(required = false) String matricula) {
         return cocheService.listarCoches(pageable, matricula);
     }
-    @PutMapping("/activarCoche/{id}")
-    public ResponseEntity<String> activarCoche(@PathVariable Integer id) {
-        try {
-            cocheService.activarCoche(id);
-            return ResponseEntity.ok("Coche activado exitosamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    @PutMapping("/desactivarCoche/{id}")
-    public ResponseEntity<String> desactivarCoche(@PathVariable Integer id) {
-        try {
-            cocheService.desactivarCoche(id);
-            return ResponseEntity.ok("Coche desactivado exitosamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+
     @PutMapping("/addLicenciaToCoche/{cocheId}/{licenciaId}")
     public ResponseEntity<String> addLicenciaToCoche(@PathVariable Integer cocheId, @PathVariable Integer licenciaId) {
         try {
