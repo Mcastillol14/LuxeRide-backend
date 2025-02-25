@@ -138,26 +138,6 @@ public class ControladorAdmin {
         }
     }
 
-    @PutMapping("/activarLicencia/{id}")
-    public ResponseEntity<String> activarLicencia(@PathVariable Integer id) {
-        try {
-            licenciaService.activarLicencia(id);
-            return ResponseEntity.ok("Licencia activada exitosamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PutMapping("/desactivarLicencia/{id}")
-    public ResponseEntity<String> desactivarLicencia(@PathVariable Integer id) {
-        try {
-            licenciaService.desactivarLicencia(id);
-            return ResponseEntity.ok("Licencia desactivada exitosamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
     @GetMapping("/allLicencias")
     public Page<Licencia> obtenerLicencias(Pageable pageable, @RequestParam(required = false) String numero) {
         return licenciaService.obtenerLicenciasPorFiltro(pageable, numero);

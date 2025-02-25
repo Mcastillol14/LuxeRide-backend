@@ -20,8 +20,6 @@ public class Licencia {
     @Column(nullable = false, unique = true)
     private String numero;
 
-    @Column(nullable = false)
-    private boolean estado = true;
 
     @OneToOne(mappedBy = "licencia", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("licencia")

@@ -26,7 +26,6 @@ public class LicenciaService {
 
         Licencia licenciaCreada = new Licencia();
         licenciaCreada.setNumero(licencia.getNumero());
-        licenciaCreada.setEstado(true);
         licenciaRepository.save(licenciaCreada);
     }
 
@@ -37,33 +36,7 @@ public class LicenciaService {
         return licenciaRepository.findAll(pageable);
     }
 
-    @Transactional
-    public void activarLicencia(Integer id) {
-        Optional<Licencia> existeLicencia = licenciaRepository.findById(id);
-        if (!existeLicencia.isPresent()) {
-            throw new IllegalArgumentException("La licencia no existe");
-        }
-        Licencia licencia = existeLicencia.get();
-        if (licencia.isEstado()) {
-            throw new IllegalArgumentException("La licencia ya está activa");
-        }
-        licencia.setEstado(true);
-        licenciaRepository.save(licencia);
-    }
 
-    @Transactional
-    public void desactivarLicencia(Integer id) {
-        Optional<Licencia> existeLicencia = licenciaRepository.findById(id);
-        if (!existeLicencia.isPresent()) {
-            throw new IllegalArgumentException("La licencia no existe");
-        }
-        Licencia licencia = existeLicencia.get();
-        if (!licencia.isEstado()) {
-            throw new IllegalArgumentException("La licencia ya está desactivada");
-        }
-        licencia.setEstado(false);
-        licenciaRepository.save(licencia);
-    }
 
     @Transactional
     public void eliminarLicencia(Integer id) {
