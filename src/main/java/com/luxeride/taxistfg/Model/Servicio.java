@@ -31,9 +31,6 @@ public class Servicio {
     @Column(name = "precio_por_km", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioPorKm;
 
-    @Column(nullable = false)
-    private boolean estado = true;
-
     // Relación OneToMany: Un servicio puede tener múltiples viajes asociados
     // mappedBy = "servicio" indica que la relación está mapeada en la clase Viaje
     // Es decir, la tabla de viajes tendrá una columna que hace referencia a este

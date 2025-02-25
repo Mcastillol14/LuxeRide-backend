@@ -30,7 +30,6 @@ public class ServicioService {
             throw new IllegalArgumentException("El precio es obligatorio");
         }
 
-        servicio.setEstado(true);
         servicioRepository.save(servicio);
     }
 
@@ -42,31 +41,6 @@ public class ServicioService {
         servicioRepository.deleteById(id);
     }
 
-    @Transactional
-    public void activarServicio(Integer id) {
-        Servicio servicio = servicioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El servicio no existe"));
-
-        if (servicio.isEstado()) {
-            throw new IllegalArgumentException("El servicio ya está activo");
-        }
-
-        servicio.setEstado(true);
-        servicioRepository.save(servicio);
-    }
-
-    @Transactional
-    public void desactivarServicio(Integer id) {
-        Servicio servicio = servicioRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("El servicio no existe"));
-
-        if (!servicio.isEstado()) {
-            throw new IllegalArgumentException("El servicio ya está desactivado");
-        }
-
-        servicio.setEstado(false);
-        servicioRepository.save(servicio);
-    }
 
     public Page<Servicio>  obtenerServicios(String tipo, Pageable pageable) {
         if (tipo == null || tipo.trim().isEmpty()) {

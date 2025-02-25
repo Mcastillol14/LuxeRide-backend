@@ -169,25 +169,6 @@ public class ControladorAdmin {
         }
     }
 
-    @PutMapping("/activarServicio/{id}")
-    public ResponseEntity<String> activarServicio(@PathVariable Integer id) {
-        try {
-            servicioService.activarServicio(id);
-            return ResponseEntity.ok("Servicio activado exitosamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-
-    @PutMapping("/desactivarServicio/{id}")
-    public ResponseEntity<String> desactivarServicio(@PathVariable Integer id) {
-        try {
-            servicioService.desactivarServicio(id);
-            return ResponseEntity.ok("Servicio desactivado exitosamente");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
 
     // Coches
     @PostMapping("/addCoche")
