@@ -2,8 +2,11 @@ package com.luxeride.taxistfg.Service;
 
 import com.luxeride.taxistfg.Model.Rol;
 import com.luxeride.taxistfg.Model.Usuario;
+import com.luxeride.taxistfg.Model.UsuarioDTO;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -11,7 +14,10 @@ import org.springframework.web.server.ResponseStatusException;
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import jakarta.transaction.Transactional;
+
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class UsuarioService {
@@ -19,6 +25,8 @@ public class UsuarioService {
     private UsuarioRepository usuarioRepository;
     @Autowired
     private PasswordEncoder encriptadoPassword;
+    @Autowired
+    private MailService mailService;
 
     public UsuarioService(UsuarioRepository usuarioRepository, PasswordEncoder encriptadoPassword) {
         this.usuarioRepository = usuarioRepository;
@@ -59,6 +67,12 @@ public class UsuarioService {
         usuario.setAccountNonLocked(true);
 
         usuarioRepository.save(usuario);
+
+        try{
+            mailService.enviarMail(usuario.getEmail(), usuario.getNombre());
+        }catch (MessagingException e){
+            System.out.println(e.getMessage());
+        }
     }
 
     @Transactional
@@ -91,12 +105,37 @@ public class UsuarioService {
         usuarioRepository.save(usuarioActualizado);
     }
 
-    public Page<Usuario> obtenerUsuariosPorFiltro(Pageable pageable, String dni) {
+    private UsuarioDTO usuarioAUsuarioDTO(Usuario usuario) {
+        return new UsuarioDTO(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getApellidos(),
+                usuario.getDni(),
+                usuario.getEmail(),
+                usuario.getRol(),
+                usuario.isAccountNonLocked()
+        );
+    }
+    public Page<UsuarioDTO> pageUsuarioDTO(Page<Usuario> usuariosPage) {
+        List<UsuarioDTO> usuarioDTOs = usuariosPage.getContent()
+                .stream()
+                .map(this::usuarioAUsuarioDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(
+                usuarioDTOs,
+                usuariosPage.getPageable(),
+                usuariosPage.getTotalElements()
+        );
+    }
+    public Page<UsuarioDTO> obtenerUsuariosDTOPorFiltro(Pageable pageable, String dni) {
+        Page<Usuario> usuariosPage;
         if (dni != null && !dni.isEmpty()) {
-            return usuarioRepository.findByDni(pageable, dni);
+            usuariosPage = usuarioRepository.findByDni(pageable, dni);
         } else {
-            return usuarioRepository.findAll(pageable);
+            usuariosPage = usuarioRepository.findAll(pageable);
         }
+        return pageUsuarioDTO(usuariosPage);
     }
 
     @Transactional
@@ -146,4 +185,9 @@ public class UsuarioService {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no tiene el rol de taxista");
         }
     }
+
+    public List<Usuario> obtenerTaxistas() {
+        return usuarioRepository.findByRol(Rol.ROL_TAXISTA);
+    }
 }
+

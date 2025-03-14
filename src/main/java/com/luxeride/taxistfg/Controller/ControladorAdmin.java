@@ -34,8 +34,8 @@ public class ControladorAdmin {
 
     //  Usuarios
     @GetMapping("/allUsuarios")
-    public Page<Usuario> obtenerUsuarios(Pageable pageable, @RequestParam(required = false) String dni) {
-        return usuarioService.obtenerUsuariosPorFiltro(pageable, dni);
+    public Page<UsuarioDTO> obtenerUsuarios(Pageable pageable, @RequestParam(required = false) String dni) {
+        return usuarioService.obtenerUsuariosDTOPorFiltro(pageable, dni);
     }
 
     @PutMapping("/editarUsuario/{id}")
@@ -156,7 +156,7 @@ public class ControladorAdmin {
 
     @GetMapping("/allServicios")
     public Page<Servicio> obtenerServicios(Pageable pageable, @RequestParam(required = false) String tipo) {
-        return servicioService.obtenerServicios(tipo, pageable);
+        return servicioService.obtenerServiciosPage(tipo, pageable);
     }
 
     @DeleteMapping("/deleteServicio/{id}")
@@ -169,7 +169,6 @@ public class ControladorAdmin {
         }
     }
 
-
     // Coches
     @PostMapping("/addCoche")
     public ResponseEntity<String> registrarCoche(@RequestBody Coche coche) {
@@ -180,9 +179,10 @@ public class ControladorAdmin {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @GetMapping("/allCoches")
-    public Page<Coche> obtenerCoches(Pageable pageable, @RequestParam(required = false) String matricula) {
-        return cocheService.listarCoches(pageable, matricula);
+    public Page<CocheDTO> obtenerCoches(Pageable pageable, @RequestParam(required = false) String matricula) {
+        return cocheService.listarCochesDTO(pageable, matricula);
     }
 
     @PutMapping("/addLicenciaToCoche/{cocheId}/{licenciaId}")
@@ -194,24 +194,7 @@ public class ControladorAdmin {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
-    @PutMapping("/disponibleCoche/{id}")
-    public ResponseEntity<String> disponibleCoche(@PathVariable Integer id) {
-        try {
-            cocheService.disponibleCoche(id);
-            return ResponseEntity.ok("Coche marcado como disponible");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
-    @PutMapping("/noDisponibleCoche/{id}")
-    public ResponseEntity<String> noDisponibleCoche(@PathVariable Integer id) {
-        try {
-            cocheService.noDisponibleCoche(id);
-            return ResponseEntity.ok("Coche marcado como no disponible");
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(e.getMessage());
-        }
-    }
+
     @DeleteMapping("/eliminarCoche/{id}")
     public ResponseEntity<String> eliminarCoche(@PathVariable Integer id) {
         try {
@@ -221,6 +204,7 @@ public class ControladorAdmin {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @PutMapping("/addUsuarioToCoche/{cocheId}/{usuarioId}")
     public ResponseEntity<String> addUsuarioToCoche(@PathVariable Integer cocheId, @PathVariable Integer usuarioId) {
         try {
@@ -230,6 +214,7 @@ public class ControladorAdmin {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @DeleteMapping("/deleteUsuarioToCoche/{cocheId}/{usuarioId}")
     public ResponseEntity<String> deleteUsuarioToCoche(@PathVariable Integer cocheId, @PathVariable Integer usuarioId) {
         try {
@@ -239,6 +224,7 @@ public class ControladorAdmin {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
+
     @GetMapping("/usuariosCoche/{id}")
     public ResponseEntity<List<UsuarioDTO>> obtenerUsuariosDeCoche(@PathVariable Integer id) {
         try {
@@ -248,6 +234,25 @@ public class ControladorAdmin {
             return ResponseEntity.badRequest().body(Collections.emptyList());
         }
     }
+
+    @GetMapping("/cochesDisponibles")
+    public ResponseEntity<List<Coche>> obtenerCochesDisponibles() {
+        List<Coche> cochesDisponibles = cocheService.listarCochesDisponibles();
+        return ResponseEntity.ok(cochesDisponibles);
+    }
+
+    @GetMapping("/cochesNoDisponibles")
+    public ResponseEntity<List<Coche>> obtenerCochesNoDisponibles() {
+        List<Coche> cochesDisponibles = cocheService.listarCochesNoDisponibles();
+        return ResponseEntity.ok(cochesDisponibles);
+    }
+    @GetMapping("/obtenerTaxistas")
+    public ResponseEntity<List<Usuario>>obtenerTaxistas(){
+        List<Usuario> taxistas=usuarioService.obtenerTaxistas();
+        return ResponseEntity.ok(taxistas);
+    }
+
+
 
 
 

@@ -8,6 +8,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import jakarta.transaction.Transactional;
 
+import java.util.List;
+
 @Service
 public class ServicioService {
 
@@ -42,10 +44,13 @@ public class ServicioService {
     }
 
 
-    public Page<Servicio>  obtenerServicios(String tipo, Pageable pageable) {
+    public Page<Servicio> obtenerServiciosPage(String tipo, Pageable pageable) {
         if (tipo == null || tipo.trim().isEmpty()) {
             return servicioRepository.findAll(pageable);
         }
         return servicioRepository.buscarServiciosPorTipo(tipo, pageable);
     }
+     public List<Servicio> obtenerServicios(){
+        return servicioRepository.findAll();
+     }
 }

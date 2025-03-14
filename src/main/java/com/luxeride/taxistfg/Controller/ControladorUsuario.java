@@ -2,8 +2,13 @@ package com.luxeride.taxistfg.Controller;
 
 
 
+import com.luxeride.taxistfg.Model.CocheDTO;
+import com.luxeride.taxistfg.Model.Servicio;
+import com.luxeride.taxistfg.Service.CocheService;
+import com.luxeride.taxistfg.Service.ServicioService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -21,15 +26,24 @@ import com.luxeride.taxistfg.Repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/usuarios")
 @RequiredArgsConstructor
 public class ControladorUsuario {
     private static final Logger logger = LoggerFactory.getLogger(ControladorUsuario.class);
 
+    @Autowired
     private final UsuarioService usuarioService;
+    @Autowired
     private final AuthService authService;
+    @Autowired
     private final UsuarioRepository usuarioRepository;
+    @Autowired
+    private final CocheService cocheService;
+    @Autowired
+    private final ServicioService servicioService;
 
     @PostMapping("/registrar")
     public ResponseEntity<String> registrarUsario(@RequestBody Usuario usuario) {
@@ -60,10 +74,6 @@ public class ControladorUsuario {
     public ResponseEntity<?> obtenerInformacion() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-            logger.debug("Authentication: " + auth);
-            logger.debug("Principal: " + auth.getPrincipal());
-            logger.debug("Authorities: " + auth.getAuthorities());
-    
             String email = (String) auth.getPrincipal();
             Usuario usuario = usuarioRepository.findByEmail(email)
                     .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado"));
@@ -88,4 +98,14 @@ public class ControladorUsuario {
                     .body("Error al obtener la información del usuario");
         }
     }
+    @GetMapping("/enServicio")
+    public List<CocheDTO> obtenerCochesEnServicio() {
+        return cocheService.listarCochesEnServicio();
+    }
+
+    @GetMapping("/allServicios")
+    public List<Servicio> obtenerServicios(){
+        return servicioService.obtenerServicios();
+    }
+
 }

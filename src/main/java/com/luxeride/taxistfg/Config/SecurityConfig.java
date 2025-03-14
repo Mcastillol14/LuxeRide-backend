@@ -23,41 +23,53 @@ import java.util.Collections;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-        private final AuthenticationProvider authProvider;
+    private final AuthenticationProvider authProvider;
 
-        @Bean
-        public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                        JwtAuthenticationFilter jwtAuthenticationFilter)
-                        throws Exception {
-                http
-                                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                                .authorizeHttpRequests(auth -> auth
-                                                .requestMatchers("/api/usuarios/registrar", "/api/usuarios/iniciar",
-                                                                "/api/admin/login")
-                                                .permitAll()
-                                                .requestMatchers("/api/usuarios/**").hasAuthority("ROLE_ROL_CLIENTE")
-                                                .requestMatchers("/api/admin/**").hasAuthority("ROLE_ROL_ADMIN")
-                                                .anyRequest().authenticated())
-                                .sessionManagement(sessionManager -> sessionManager
-                                                .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                                .authenticationProvider(authProvider)
-                                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-                                .csrf(AbstractHttpConfigurer::disable);
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtAuthenticationFilter jwtAuthenticationFilter)
+            throws Exception {
+        http
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        // Permitir acceso a rutas públicas
+                        .requestMatchers("/api/usuarios/registrar", "/api/usuarios/iniciar",
+                                "/api/admin/login")
+                        .permitAll()
 
-                return http.build();
-        }
+                        // Permitir acceso a info para clientes, admins y taxistas
+                        .requestMatchers("/api/usuarios/info","/api/admin/allServicios")
+                        .hasAnyAuthority("ROLE_ROL_CLIENTE", "ROLE_ROL_ADMIN", "ROLE_ROL_TAXISTA")
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-                CorsConfiguration configuration = new CorsConfiguration();
-                configuration.setAllowedOrigins(Collections.singletonList("*"));
-                configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-                configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-                configuration.setExposedHeaders(Arrays.asList("Authorization"));
-                configuration.setAllowCredentials(false);
+                        // Permitir acceso a admin solo para admins
+                        .requestMatchers("/api/admin/**")
+                        .hasAuthority("ROLE_ROL_ADMIN")
 
-                UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                source.registerCorsConfiguration("/**", configuration);
-                return source;
-        }
+                        // Permitir acceso a los taxistas a estas rutas
+                        .requestMatchers("/api/taxista/**")
+                        .hasAnyAuthority("ROLE_ROL_TAXISTA", "ROLE_ROL_ADMIN")  // Los taxistas pueden acceder a estas rutas
+
+                        .anyRequest().authenticated())
+                .sessionManagement(sessionManager -> sessionManager
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authenticationProvider(authProvider)
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .csrf(AbstractHttpConfigurer::disable);
+
+        return http.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Collections.singletonList("*"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setExposedHeaders(Arrays.asList("Authorization"));
+        configuration.setAllowCredentials(false);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

@@ -5,6 +5,7 @@ import com.luxeride.taxistfg.Repository.CocheRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
@@ -38,54 +39,93 @@ public class CocheService {
         if (coche.getModelo() == null || coche.getModelo().isEmpty()) {
             throw new IllegalArgumentException("El modelo es obligatorio");
         }
-        Coche CocheCreado = new Coche();
-        CocheCreado.setMatricula(coche.getMatricula());
-        CocheCreado.setMarca(coche.getMarca());
-        CocheCreado.setModelo(coche.getModelo());
-        CocheCreado.setDisponible(false);
-        cocheRepository.save(CocheCreado);
+        Coche cocheCreado = new Coche();
+        cocheCreado.setMatricula(coche.getMatricula());
+        cocheCreado.setMarca(coche.getMarca());
+        cocheCreado.setModelo(coche.getModelo());
+        cocheCreado.setDisponible(true);
+        cocheRepository.save(cocheCreado);
     }
 
-    public Page<Coche> listarCoches(Pageable pageable, String matricula) {
+    public CocheDTO cocheACocheDTO(Coche coche) {
+        if (coche == null) {
+            return null;
+        }
+
+        List<UsuarioDTO> usuarioDTOs = coche.getUsuarios() != null ?
+                coche.getUsuarios().stream()
+                        .map(this::usuarioAUsuarioDTO)
+                        .collect(Collectors.toList()) :
+                null;
+
+        return new CocheDTO(
+                coche.getId(),
+                coche.getModelo(),
+                coche.getMarca(),
+                coche.getMatricula(),
+                licenciaALicenciaDTO(coche.getLicencia()),
+                usuarioDTOs,
+                coche.isDisponible()
+        );
+    }
+
+    private LicenciaDTO licenciaALicenciaDTO(Licencia licencia) {
+        if (licencia == null) {
+            return null;
+        }
+        return new LicenciaDTO(
+                licencia.getId(),
+                licencia.getNumero()
+        );
+    }
+
+    private UsuarioDTO usuarioAUsuarioDTO(Usuario usuario) {
+        return new UsuarioDTO(
+                usuario.getId(),
+                usuario.getNombre(),
+                usuario.getApellidos(),
+                usuario.getDni(),
+                usuario.getEmail(),
+                usuario.getRol(),
+                usuario.isAccountNonLocked()
+        );
+    }
+
+    public Page<CocheDTO> pageCochesDTO(Page<Coche> cochesPage) {
+        List<CocheDTO> cocheDTOs = cochesPage.getContent()
+                .stream()
+                .map(this::cocheACocheDTO)
+                .collect(Collectors.toList());
+
+        return new PageImpl<>(
+                cocheDTOs,
+                cochesPage.getPageable(),
+                cochesPage.getTotalElements()
+        );
+    }
+
+    public Page<CocheDTO> listarCochesDTO(Pageable pageable, String matricula) {
+        Page<Coche> coches;
         if (matricula != null && !matricula.isEmpty()) {
-            return cocheRepository.buscarCochesPorMatricula(matricula, pageable);
+            coches = cocheRepository.buscarCochesPorMatricula(matricula, pageable);
+        } else {
+            coches = cocheRepository.findAll(pageable);
         }
-        return cocheRepository.findAll(pageable);
+        return pageCochesDTO(coches);
     }
 
-
-    @Transactional
-    public void disponibleCoche(Integer id) {
-        Optional<Coche> existeCoche = cocheRepository.findById(id);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("La matricula no existe");
-        }
-        Coche coche = existeCoche.get();
-        if (coche.isDisponible()) {
-            throw new IllegalArgumentException("La matricula ya esta disponible");
-        }
-        coche.setDisponible(true);
-        cocheRepository.save(coche);
+    public List<Coche> listarCochesDisponibles() {
+        return cocheRepository.findByDisponibleTrue();
     }
 
-    @Transactional
-    public void noDisponibleCoche(Integer id) {
-        Optional<Coche> existeCoche = cocheRepository.findById(id);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("La matricula no existe");
-        }
-        Coche coche = existeCoche.get();
-        if (!coche.isDisponible()) {
-            throw new IllegalArgumentException("La matricula ya esta en no disponible");
-        }
-        coche.setDisponible(false);
-        cocheRepository.save(coche);
+    public List<Coche> listarCochesNoDisponibles() {
+        return cocheRepository.findByDisponibleFalse();
     }
+
 
     @Transactional
     public void eliminarCoche(Integer id) {
-        Optional<Coche> existeCoche = cocheRepository.findById(id);
-        if (!existeCoche.isPresent()) {
+        if (!cocheRepository.existsById(id)) {
             throw new IllegalArgumentException("La matricula no existe");
         }
         cocheRepository.deleteById(id);
@@ -93,19 +133,8 @@ public class CocheService {
 
     @Transactional
     public void addUsuarioToCoche(Integer cocheId, Integer usuarioId) {
-        Optional<Coche> existeCoche = cocheRepository.findById(cocheId);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("El coche con el ID proporcionado no existe");
-        }
-
-        Coche coche = existeCoche.get();
-
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
-        if (!usuarioOpt.isPresent()) {
-            throw new IllegalArgumentException("El usuario con el ID proporcionado no existe");
-        }
-
-        Usuario usuario = usuarioOpt.get();
+        Coche coche = getCocheById(cocheId);
+        Usuario usuario = getUsuarioById(usuarioId);
 
         if (usuario.getRol() != Rol.ROL_TAXISTA) {
             throw new IllegalArgumentException("El usuario no tiene el rol de TAXISTA");
@@ -114,21 +143,11 @@ public class CocheService {
         coche.addUsuario(usuario);
         cocheRepository.save(coche);
     }
+
     @Transactional
     public void deleteUsuarioToCoche(Integer cocheId, Integer usuarioId) {
-        Optional<Coche> existeCoche = cocheRepository.findById(cocheId);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("El coche con el ID proporcionado no existe");
-        }
-
-        Coche coche = existeCoche.get();
-
-        Optional<Usuario> usuarioOpt = usuarioRepository.findById(usuarioId);
-        if (!usuarioOpt.isPresent()) {
-            throw new IllegalArgumentException("El usuario con el ID proporcionado no existe");
-        }
-
-        Usuario usuario = usuarioOpt.get();
+        Coche coche = getCocheById(cocheId);
+        Usuario usuario = getUsuarioById(usuarioId);
 
         if (!coche.getUsuarios().contains(usuario)) {
             throw new IllegalArgumentException("El usuario no está asignado a este coche");
@@ -140,19 +159,8 @@ public class CocheService {
 
     @Transactional
     public void addLicenciaToCoche(Integer cocheId, Integer licenciaId) {
-        Optional<Coche> existeCoche = cocheRepository.findById(cocheId);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("El coche con el ID proporcionado no existe");
-        }
-
-        Coche coche = existeCoche.get();
-
-        Optional<Licencia> existeLicencia = licenciaRepository.findById(licenciaId);
-        if (!existeLicencia.isPresent()) {
-            throw new IllegalArgumentException("La licencia con el ID proporcionado no existe");
-        }
-
-        Licencia licencia = existeLicencia.get();
+        Coche coche = getCocheById(cocheId);
+        Licencia licencia = getLicenciaById(licenciaId);
 
         if (licencia.getCoche() != null) {
             throw new IllegalArgumentException("La licencia ya está asignada a otro coche");
@@ -167,26 +175,86 @@ public class CocheService {
 
     @Transactional
     public List<UsuarioDTO> obtenerUsuariosDeCoche(Integer cocheId) {
-        Optional<Coche> existeCoche = cocheRepository.findById(cocheId);
-        if (!existeCoche.isPresent()) {
-            throw new IllegalArgumentException("El coche con el ID proporcionado no existe");
-        }
-
-        Coche coche = existeCoche.get();
+        Coche coche = getCocheById(cocheId);
         return coche.getUsuarios().stream()
-                .map(this::convertToDTO)
+                .map(this::usuarioAUsuarioDTO)
                 .collect(Collectors.toList());
     }
 
-    private UsuarioDTO convertToDTO(Usuario usuario) {
-        return new UsuarioDTO(
-                usuario.getId(),
-                usuario.getNombre(),
-                usuario.getApellidos(),
-                usuario.getDni(),
-                usuario.getEmail(),
-                usuario.getRol(),
-                usuario.isAccountNonLocked()
-        );
+    @Transactional
+    public void ponerCocheEnServicio(Integer cocheId, Integer taxistaId) {
+        Coche coche = getCocheById(cocheId);
+        Usuario taxista = getUsuarioById(taxistaId);
+
+        if (coche.isEnServicio()) {
+            throw new IllegalArgumentException("El coche ya está en servicio");
+        }
+
+        if (taxista.getRol() != Rol.ROL_TAXISTA) {
+            throw new IllegalArgumentException("El usuario no tiene el rol de TAXISTA");
+        }
+
+        if (!coche.getUsuarios().contains(taxista)) {
+            throw new IllegalArgumentException("El taxista no está asignado a este coche");
+        }
+
+        coche.setEnServicio(true);
+        coche.setTaxistaEnServicio(taxista);
+        coche.setDisponible(false);
+        cocheRepository.save(coche);
     }
+
+    @Transactional
+    public void liberarCocheDeServicio(Integer cocheId) {
+        Coche coche = getCocheById(cocheId);
+
+        if (!coche.isEnServicio()) {
+            throw new IllegalArgumentException("El coche no está en servicio");
+        }
+
+        coche.setEnServicio(false);
+        coche.setTaxistaEnServicio(null);
+        coche.setDisponible(true);
+
+        cocheRepository.save(coche);
+    }
+
+    public List<Coche> obtenerCochesDisponiblesPorTaxista(Integer taxistaId) {
+        Usuario taxista = getUsuarioById(taxistaId);
+
+        if (taxista.getRol() != Rol.ROL_TAXISTA) {
+            throw new IllegalArgumentException("El usuario con el ID proporcionado no es un taxista.");
+        }
+
+        return cocheRepository.fnindCochesDeTaxista(taxista);
+    }
+
+    private Coche getCocheById(Integer id) {
+        return cocheRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El coche con el ID proporcionado no existe"));
+    }
+
+    private Usuario getUsuarioById(Integer id) {
+        return usuarioRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El usuario con el ID proporcionado no existe"));
+    }
+
+    private Licencia getLicenciaById(Integer id) {
+        return licenciaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("La licencia con el ID proporcionado no existe"));
+    }
+
+    public List<CocheDTO> listarCochesEnServicio() {
+        // Obtener todos los coches que están en servicio
+        List<Coche> cochesEnServicio = cocheRepository.findByEnServicioTrue();
+
+        // Convertir cada coche a CocheDTO y devolver la lista
+        return cochesEnServicio.stream()
+                .map(this::cocheACocheDTO)  // Solo convertimos el coche a CocheDTO
+                .collect(Collectors.toList());
+    }
+
+
+
+
 }
