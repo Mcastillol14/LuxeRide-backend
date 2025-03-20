@@ -47,7 +47,7 @@ public class SecurityConfig {
 
                         // Permitir acceso a los taxistas a estas rutas
                         .requestMatchers("/api/taxista/**")
-                        .hasAnyAuthority("ROLE_ROL_TAXISTA", "ROLE_ROL_ADMIN")  // Los taxistas pueden acceder a estas rutas
+                        .hasAnyAuthority("ROLE_ROL_TAXISTA", "ROLE_ROL_ADMIN")
 
                         .anyRequest().authenticated())
                 .sessionManagement(sessionManager -> sessionManager

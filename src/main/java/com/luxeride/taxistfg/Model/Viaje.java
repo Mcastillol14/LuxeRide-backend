@@ -30,11 +30,9 @@ public class Viaje {
     @Column(nullable = false)
     private String destino;
 
-    // Utilizamos BigDecimal para representar la distancia con precisión
     @Column(name = "distancia_km", nullable = false, precision = 10, scale = 2)
     private BigDecimal distanciaKm;
 
-    // Se utiliza BigDecimal con precisión para representar valores monetarios
     @Column(name = "precio_total", nullable = false, precision = 10, scale = 2)
     private BigDecimal precioTotal;
 
@@ -62,6 +60,7 @@ public class Viaje {
     @JoinColumn(name = "coche_id", nullable = false)
     private Coche coche;
 
-    @Column(nullable = false)
-    private String foto;
+    @Lob
+    @Column(nullable = false, columnDefinition = "LONGBLOB")
+    private byte[] foto;
 }

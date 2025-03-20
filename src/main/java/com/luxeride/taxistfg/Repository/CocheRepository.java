@@ -29,6 +29,10 @@ public interface CocheRepository extends JpaRepository<Coche, Integer> {
 
     List<Coche> findByEnServicioTrue();
 
+    @Query("SELECT c FROM Coche c WHERE c.id = :cocheId AND c.enServicio = true")
+    Optional<Coche> findByIdAndEnServicioTrue(@Param("cocheId") Integer cocheId);
+
+
 
     void deleteById(Integer id);
 }

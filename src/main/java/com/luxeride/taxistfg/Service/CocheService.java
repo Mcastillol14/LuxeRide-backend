@@ -11,7 +11,9 @@ import org.springframework.stereotype.Service;
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
 import com.luxeride.taxistfg.Repository.LicenciaRepository;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -65,7 +67,8 @@ public class CocheService {
                 coche.getMatricula(),
                 licenciaALicenciaDTO(coche.getLicencia()),
                 usuarioDTOs,
-                coche.isDisponible()
+                coche.isDisponible(),
+                usuarioAUsuarioDTO(coche.getTaxistaEnServicio())
         );
     }
 
@@ -80,6 +83,9 @@ public class CocheService {
     }
 
     private UsuarioDTO usuarioAUsuarioDTO(Usuario usuario) {
+        if (usuario == null) {
+            return null;
+        }
         return new UsuarioDTO(
                 usuario.getId(),
                 usuario.getNombre(),
@@ -90,6 +96,7 @@ public class CocheService {
                 usuario.isAccountNonLocked()
         );
     }
+
 
     public Page<CocheDTO> pageCochesDTO(Page<Coche> cochesPage) {
         List<CocheDTO> cocheDTOs = cochesPage.getContent()
@@ -182,7 +189,7 @@ public class CocheService {
     }
 
     @Transactional
-    public void ponerCocheEnServicio(Integer cocheId, Integer taxistaId) {
+    public Map<String, Object> ponerCocheEnServicio(Integer cocheId, Integer taxistaId) {
         Coche coche = getCocheById(cocheId);
         Usuario taxista = getUsuarioById(taxistaId);
 
@@ -202,7 +209,17 @@ public class CocheService {
         coche.setTaxistaEnServicio(taxista);
         coche.setDisponible(false);
         cocheRepository.save(coche);
+
+        // Devolver un Map con los campos del taxista
+        Map<String, Object> response = new HashMap<>();
+        response.put("id", taxista.getId());
+        response.put("nombre", taxista.getNombre());
+        response.put("apellidos", taxista.getApellidos());
+
+        return response;
     }
+
+
 
     @Transactional
     public void liberarCocheDeServicio(Integer cocheId) {
@@ -254,7 +271,18 @@ public class CocheService {
                 .collect(Collectors.toList());
     }
 
+    public CocheDTO obtenerCocheEnServicioPorId(Integer cocheId) {
+        if (cocheId == null) {
+            throw new IllegalArgumentException("El ID del coche no puede ser nulo");
+        }
 
+        Optional<Coche> cocheOptional = cocheRepository.findByIdAndEnServicioTrue(cocheId);
 
+        if (cocheOptional.isPresent()) {
+            return cocheACocheDTO(cocheOptional.get());
+        } else {
+            return null;
+        }
+    }
 
 }

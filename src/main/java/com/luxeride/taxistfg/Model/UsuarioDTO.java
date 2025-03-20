@@ -15,5 +15,6 @@ public class UsuarioDTO {
     private String email;
     private Rol rol;
     private boolean accountNonLocked;
+
 }
 

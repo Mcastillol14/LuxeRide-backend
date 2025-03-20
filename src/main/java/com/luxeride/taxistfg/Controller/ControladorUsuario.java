@@ -2,31 +2,32 @@ package com.luxeride.taxistfg.Controller;
 
 
 
-import com.luxeride.taxistfg.Model.CocheDTO;
-import com.luxeride.taxistfg.Model.Servicio;
-import com.luxeride.taxistfg.Service.CocheService;
-import com.luxeride.taxistfg.Service.ServicioService;
+import com.itextpdf.text.DocumentException;
+import com.luxeride.taxistfg.Model.*;
+import com.luxeride.taxistfg.Repository.ViajeRepository;
+import com.luxeride.taxistfg.Service.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 
-import com.luxeride.taxistfg.Service.AuthService;
-import com.luxeride.taxistfg.Service.UsuarioService;
 import com.luxeride.taxistfg.Util.LoginRequest;
 import com.luxeride.taxistfg.JWT.AuthResponse;
-import com.luxeride.taxistfg.Model.Usuario;
-import com.luxeride.taxistfg.Model.UsuarioDTO;
 import com.luxeride.taxistfg.Repository.UsuarioRepository;
 
 import lombok.RequiredArgsConstructor;
 
+import java.io.IOException;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -44,6 +45,13 @@ public class ControladorUsuario {
     private final CocheService cocheService;
     @Autowired
     private final ServicioService servicioService;
+    @Autowired
+    private final ViajeService viajeService;
+    @Autowired
+    private ViajeRepository viajeRepository;
+
+    @Autowired
+    private PdfService pdfService;
 
     @PostMapping("/registrar")
     public ResponseEntity<String> registrarUsario(@RequestBody Usuario usuario) {
@@ -106,6 +114,50 @@ public class ControladorUsuario {
     @GetMapping("/allServicios")
     public List<Servicio> obtenerServicios(){
         return servicioService.obtenerServicios();
+    }
+
+    @PostMapping("/hacerViaje")
+    public ResponseEntity<String> registrarViaje(@RequestBody Viaje viaje) {
+        try {
+            viajeService.registrarViaje(viaje);
+            return ResponseEntity.ok("Viaje registrado exitosamente.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body("Error al registrar el viaje: " + e.getMessage());
+        }
+    }
+    @GetMapping("/generarPDF/{idCliente}")
+    public ResponseEntity<byte[]> generarPdfUltimoViaje(@PathVariable Integer idCliente) {
+        try {
+            // Obtener todos los viajes del cliente ordenados por ID descendente
+            List<Viaje> viajes = viajeRepository.findViajesCliente(idCliente);
+
+            if (viajes.isEmpty()) {
+                return ResponseEntity.notFound().build();
+            }
+
+            // Tomar solo el primer viaje (el más reciente)
+            Viaje viaje = viajes.get(0);
+
+            // Generar el PDF
+            byte[] pdfBytes = pdfService.generarPdfViaje(viaje);
+
+            // Configurar las cabeceras de la respuesta
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+
+            // Nombre del archivo: ticket_viaje_[fecha].pdf
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss");
+            String fechaFormateada = viaje.getHoraLlegada().format(formatter);
+            String filename = "ticket_viaje_" + fechaFormateada + ".pdf";
+
+            headers.setContentDispositionFormData("attachment", filename);
+            headers.setCacheControl("must-revalidate, post-check=0, pre-check=0");
+
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (DocumentException | IOException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
 }

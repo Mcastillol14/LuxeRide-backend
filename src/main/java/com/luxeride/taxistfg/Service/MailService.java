@@ -7,6 +7,7 @@ import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
+
 @Service
 public class MailService {
 
@@ -20,6 +21,7 @@ public class MailService {
         helper.setTo(email);
         helper.setSubject("¡Bienvenido a LuxeRide!");
         helper.setFrom("mcastillol14.practica@gmail.com");
+
 
         String contenidoHtml = """
                 <html>
@@ -62,6 +64,10 @@ public class MailService {
                             margin-top: 20px;
                             font-size: 16px;
                         }
+                        a {
+                            color: white !important;
+                             text-decoration: none;
+                        }
                         .footer {
                             text-align: center;
                             font-size: 12px;
@@ -91,10 +97,10 @@ public class MailService {
                         <div class="content">
                             <p>Gracias por registrarte en <b>LuxeRide</b>. Nos emociona tenerte a bordo.</p>
                             <p>Con LuxeRide, disfrutarás de un servicio de transporte de lujo con la mejor comodidad.</p>
-                            <a href="https://www.mcastillol14.online" class="button">Explorar LuxeRide</a>
+                            <a href="https://luxeride.mcastillol14.online" class="button">Explorar LuxeRide</a>
                         </div>
                         <div class="footer">
-                            &copy; 2024 LuxeRide. Todos los derechos reservados.
+                            &copy; 2025 LuxeRide. Todos los derechos reservados.
                         </div>
                     </div>
                 </body>

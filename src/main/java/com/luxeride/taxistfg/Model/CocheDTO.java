@@ -17,4 +17,5 @@ public class CocheDTO {
     private LicenciaDTO licencia;
     private List<UsuarioDTO> usuarios;
     private boolean disponible;
+    private UsuarioDTO taxistaEnServicio;
 }
