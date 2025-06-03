@@ -20,7 +20,7 @@ public class MailService {
 
         helper.setTo(email);
         helper.setSubject("¡Bienvenido a LuxeRide!");
-        helper.setFrom("mcastillol14.practica@gmail.com");
+        helper.setFrom("***");
 
 
         String contenidoHtml = """
